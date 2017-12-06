@@ -54,34 +54,27 @@
      }
     </style>
 
-    <!-- testing polyline listener -->
-    path = <div id="path"></div>
-
+    <!-- testing coordinates, works for planCoordinates[0].lat) when loadMap() called, by calling mapLoaded() -->
     <button on-click="loadMap">loadMap</button>
-    
-    <!-- testing: works when _zoomChanged called, by calling mapLoaded() -->    
+    <!--                                                         ToDo JK: replace input with e.g. paper-input -->
+    <!--                                                         ToDo JK: add on-tap handler -->
+    <!--                                                         ToDo JK: on-tap also data writes to global var-->
     <div><template is="dom-repeat" items="{{planCoordinates}}"
 		   plan-coordinates="{{planCoordinates}}">
 	<input id="lat_i" type="number" style="width:18mm" value="{{item.lat::input}}">
 	<p id="lat_t">lat:</p>
-        <!-- <paper-input id="test" type="number" label="lat" max=10 style="width:18mm"
-		     value="{{item.lat}}" on-value-changed="onInput">
-	</paper-input> -->
     </template></div><br>
     <div><template is="dom-repeat" items="{{planCoordinates}}"
 		   plan-coordinates="{{planCoordinates}}">
 	<input id="lng_i" type="number" style="width:18mm" value="{{item.lng::input}}">
 	<p id="lng_t">lng:</p>     
-    </template></div>
+    </template></div><br>
 
-    <!-- <div class="card">     <!-- "card" not displayed ??  needed? -->
     <div>
-	<h1>Polymer google-maps-api extended example</h1>
-	<!-- <div id="map"> -->  <!-- displays two google maps, one small and one as per #map -->
-	<!-- moved id="map" to <google-maps=api> -required to get correctly sized map -->
+	<h1>Map View</h1>
 	<google-maps-api id="map" on-api-load="mapLoaded" api-key="AIzaSyCy71TCJa_xLJQbCCdZu4dtYMNh8Nav7zw"
 			 version="3.exp" altendorf-trails="{{altendorfTrails}}"
-			 plan-coordinates="{{planCoordinates}}">
+			 plan-coordinates="{{planCoordinates}}" alignment="{{alignment}}">
 	</google-maps-api>
 	<paper-icon-button icon="check-box" id="rm_overlay" on-tap="removeOverlay"
 			   altendorf-trails="{{altendorfTrails}}">
@@ -97,21 +90,16 @@
 	    return {
 		altendorfTrails: {
 		    type: Object,
-		    notify: true,
 		    value: null,
+		    notify: true,
 		},
 		planCoordinates: {
 		    type: Array,
+		    value: planCoordinatesGlbl,
 		    notify: true,
-		    value: [
-			{lat: 47.19056, lng: 8.82532},
-			{lat: 47.18997, lng: 8.82302},
-			{lat: 47.18994, lng: 8.82180},
-			{lat: 47.18896, lng: 8.81960}
-		    ],
 		    observer: 'observeCoordinates',
 		},
-		alignment: {
+		alignment: {               //testing
 		    type: Object,
 		},
 	    }
@@ -122,21 +110,18 @@
 	   console.log('from constructor');
        }
 
-       ready() {                                           //console.log does not write to console ??
+       ready() {
 	   super.ready();
 	   console.log('from ready');
        }
 	   
        mapLoaded() {
 	   console.log('google-maps-api loading');
-	   //testing getting element id
 	   var pathAlignment = Polymer.dom(this.root).querySelector("#path");
-	   console.log(pathAlignment);
 
 	   var mapsAPI = this.shadowRoot.querySelector('google-maps-api');
 	   var mapCenter = {lat: 47.1899, lng: 8.8219};
 	   var map = new google.maps.Map(mapsAPI, {
-	       //center: {lat: 47.190215, lng: 8.821755},
 	       center: mapCenter,
 	       zoom: 13,
 	       tilt: 45,  //seems to be default
@@ -152,11 +137,16 @@
 	       draggable: true,
 	   });
 	   
-	   console.log('planCoordinates',this.planCoordinates);
+	   console.log('this.planCoordinates',this.planCoordinates);
+	   //                                                            ToDo JK: do Number for all coordinates
+	   //                                                                                in on-tap handler?
 	   this.planCoordinates[0].lat=Number(this.planCoordinates[0].lat);
 	   console.log('this.planCoordinates[0].lat) ',this.planCoordinates[0].lat);
-	   console.log('planCoordinates[0].lat',this.planCoordinates[0].lat);
+	   //console.log('planCoordinates[0].lat',planCoordinates[0].lat);            //not defined  ??check
 	   var alignment = new google.maps.Polyline({
+	   //  with alignment, works ok, but alignment not exposed to polymer bindings
+	   //this.alignment = new google.maps.Polyline({      // testing, also change 'this' below  !!!
+	   //  with this.alignment, exposes alignment to poymer bindings, but scoping issues in alignmentChange()
 	       path: this.planCoordinates,
 	       geodesic: true,
 	       editable: true,
@@ -165,9 +155,8 @@
 	       strokeOpacity: 1.0,
 	       strokeWeight: 2,
 	   });
-	   //alignment.setMap(map);   //useful to redisplay changed alignment?
-	   // listener for polyline, works
-	   google.maps.event.addListener(alignment, "dragend", function () {
+	   // listener for polyline
+	   google.maps.event.addListener(alignment.getPath(), "dragend", function () {
 	       alignmentChanged(alignment) });
 	   google.maps.event.addListener(alignment.getPath(), "insert_at", function () {
 	       alignmentChanged(alignment) });
@@ -175,19 +164,25 @@
 	       alignmentChanged(alignment) });
 	   google.maps.event.addListener(alignment.getPath(), "set_at", function () {
 	       alignmentChanged(alignment) });
-	   alignment.setMap(map); 
-	  function  alignmentChanged(alignment) {  //testing                      //polyline Listener
-	      console.log('alignmentChanged');
-	      //console.log('alignment ', alignment);
-	      var path = alignment.getPath();
-	      var len = path.getLength();
-	      var coordStr = "";
-	      for (var i = 0; i < len; i++) {
-		  coordStr += path.getAt(i).toUrlValue(6) + "<br>";
-	      }
-	      console.log('coordStr ', coordStr);
-	      pathAlignment.innerHTML = coordStr;  //output to element with id="path"
-	  }
+	   //console.log('alignment: this.alignment', this.alignment);  //defined
+	   alignment.setMap(map);
+	   function  alignmentChanged(alignment) {  //testing polyline Listener
+	       console.log('alignmentChanged');
+	       //console.log('alignment', alignment);
+	       var path = alignment.getPath();       //alignment undefined if this.alignment used above !!??
+	       var coordinates = [];
+	       var len = path.getLength();
+	       //get lat/lng coordinates from path
+	       for (var i = 0; i < path.getLength(); i++) {
+		   coordinates.push({  //format corresponds to planCoordinates
+		       lat: path.getAt(i).lat(),
+		       lng: path.getAt(i).lng()
+		   });
+	       };
+	       //console.log('coordinates', coordinates);
+	       //console.log('planCoordinates', planCoordinates);  //global variable
+	       planCoordinatesGlbl = coordinates;            //does not update this.planCoordinates !!
+	   }
 	   
 	   var imageBounds = {
 	       north: 47.19658,
@@ -203,7 +198,6 @@
 	   );
 	   console.log('altendorfTrails',this.altendorfTrails);
 	   this.altendorfTrails.setMap(map);  //required if map: not set
-	   //altendorfTrails.setMap(null);  //use to remove Overlay
 	   
 	   // Try HTML5 geolocation (quickly hacked from google-maps-api example for js,
 	   // but it works)
@@ -239,26 +233,30 @@
            // add Listner to (re)gelocate
 	   map.addListener('click', function() {
 	       console.log('click');
-	       //console.log('map',map); //ok
-	       //console.log(typeof map);  //object		   
 	       geoLocate();		   
 	   })
        };
        
-       removeOverlay(e) {  //quick testing, woks with on-api-load instead of mapsAPI EventListener
+       removeOverlay(e) {  //quick testing, works with on-api-load instead of mapsAPI EventListener
 	   console.log('removing Overlay');
-	   console.log('altendorfTrails',this.altendorfTrails);
+	   //console.log('altendorfTrails',this.altendorfTrails);
 	   this.altendorfTrails.setMap(null);  //use to remove Overlay
        };
 
-       observeTest() {  //testing
-	   console.log('observeTest');
-	   console.log('constructor: this ',this);
-       }
-
        loadMap() {  //testing
 	   console.log('loadMap');
-	   this.mapLoaded();  //map zooms with paper-input with Number operator applied to zoom input	   
+	   console.log('this.planCoordinates', this.planCoordinates);
+	   console.log('planCoordinatesGlbl', planCoordinatesGlbl);
+	   console.log('test', this.planCoordinates === planCoordinatesGlbl);  //true after <input>
+	   //console.log('this.planCoordinates' ,this.planCoordinates);
+	   //console.log('planCoordinates' ,planCoordinates);  //global variable
+////	   this.planCoordinates = planCoordinatesGlbl;  //needed to update this.planCoordinates after listener
+	                                            //  -dragging polyline does not set this.planCoordinates!!
+	                                       //loadMap not needed to update this.planCoordinates after input
+////	   this.mapLoaded();
+	   //console.log('this.alignment', this.alignment);  //undefined with or without data binding
+	                                                     //ok after 'var' removed and 'this' introduced?
+	   //this.alignment.setMap(map);  //map is not defined
        }
 
        observeCoordinates() {  //testing, never fires (probably because tems are inside an array)
@@ -268,8 +266,14 @@
        }
    }
 
-   console.log('testing from window');
-
+   console.log('from window');
+   var planCoordinatesGlbl = [
+       {lat: 47.19056, lng: 8.82532},
+       {lat: 47.18997, lng: 8.82302},
+       {lat: 47.18994, lng: 8.82180},
+       {lat: 47.18896, lng: 8.81960}
+   ];
+   
    window.customElements.define(MyView1.is, MyView1);   
   </script>
 </dom-module>
