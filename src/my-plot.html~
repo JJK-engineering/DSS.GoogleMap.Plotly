@@ -1,0 +1,118 @@
+<!-- my-plot.html  Polymer custom element for creating a plotyly plot -->
+
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/plotly-plot/plotly-plot.html">
+
+<dom-module id="my-plot">
+    <template>
+	<!-- plotly-polymer-fix styles included in shared-styles.html -->
+	<style include="shared-styles">
+	    :host {
+	    display: block;
+	    padding: 10px;
+	    }
+	</style>
+
+	<div id="plot">
+	    <slot></slot> 
+	    <paper-icon-button icon="check-box" on-tap="onClick"></paper-icon-button>update
+	</div>	    
+    </template>
+
+    <script>
+     class MyPlot extends Polymer.Element {
+	 static get is() { return 'my-plot'}
+	 
+	 static get properties() {
+	     return {
+		 data: {
+		     type: Array,
+		     notify: true,
+		     observer: '_dataChanged'
+		 },
+		 layout: {
+		     type: Object,
+		     notify: true,
+		     //observer: '_layoutChanged'  //does not work for sub-propeties
+		 },
+		planCoordinates: {
+		    type: Array,
+		    notify: true,
+		},
+	     }
+	 }
+	 
+	 static get observers() {
+	     return [
+		 '_layoutChanged(layout.title)',  //observers for sub-properties are defined this way
+		 '_dataChanged(data.*)', //observers for deeper sub-properties, but array changes not observable
+	     ]
+	 }
+	 
+	 onClick() {
+	     console.log('Click');
+	     console.log('this.data ', this.data); 
+	     console.log('this.planCoordinates ', this.planCoordinates);  //undefined
+	     var station = [0.0];                     //mv all station stuff to ? or leave here?
+	                                              //  here is profile + results, so not really right place
+	                                              //  mv to profile, pack 'station' into profile plot data
+////	     var prevStat = 0.0;
+	     // calculate stationing along alignment
+	     for (var i = 1; i <this.planCoordinates.length; i++) {
+		 var dist = getDistanceFromLatLonInKm(
+		     this.planCoordinates[i-1].lat, this.planCoordinates[i-1].lng,
+		     this.planCoordinates[i].lat, this.planCoordinates[i].lng);
+		 station.push(station[i-1] + dist);
+////		 console.log('prevDist '. prevDist);
+////		 prevStat = station[i-1];
+		 console.log('this.planCoordinates[i]lat,lng ' ,
+			     this.planCoordinates[i].lat, this.planCoordinates[i].lng,
+			     dist);
+	     // calculate distance between lat/lng of two coordinate points
+		     //	 station = station +
+	     }
+	     console.log('station ',station);
+
+	     function getDistanceFromLatLonInKm(lat1,lon1,lat2,lon2) {
+		 var R = 6371; // Radius of the earth in km
+		 var dLat = deg2rad(lat2-lat1);  // deg2rad below
+		 var dLon = deg2rad(lon2-lon1);
+		 var a =
+		     Math.sin(dLat/2) * Math.sin(dLat/2) +
+		     Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+		     Math.sin(dLon/2) * Math.sin(dLon/2)
+		 ;
+		 var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+		 var d = R * c; // Distance in km
+		 return d;
+	     }
+
+	     function deg2rad(deg) {
+		 return deg * (Math.PI/180)
+	     }
+	     
+	     Plotly.newPlot(this.$.plot, this.data, this.layout);
+	 }
+
+	 _layoutChanged(value) {
+	     //console.log('_layoutChange');	     
+	     Plotly.newPlot(this.$.plot, this.data, this.layout);
+	 }
+
+	 _dataChanged(changeRecord) {
+	     //console.log('_dataChange');
+	     Plotly.newPlot(this.$.plot, this.data, this.layout);  //Plotly.update requires diff array structure
+	 }
+
+	 ready() {
+	     super.ready();
+	     Plotly.newPlot(this.$.plot, this.data, this.layout);  //this.data points to data in Polymer.Element
+	 }                                                         //data points to global data
+     }
+
+     customElements.define(MyPlot.is, MyPlot);
+    </script>
+</dom-module>

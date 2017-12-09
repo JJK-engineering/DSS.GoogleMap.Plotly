@@ -95,7 +95,7 @@
 		},
 		planCoordinates: {
 		    type: Array,
-		    value: planCoordinatesGlbl,
+//		    value: planCoordinatesGlbl,
 		    notify: true,
 		    observer: 'observeCoordinates',
 		},
@@ -167,7 +167,7 @@
 	       console.log('alignmentChanged: this', this);
 	       var path = this.alignment.getPath();
 	       var coordinates = [];
-	       var len = path.getLength();
+	       var len = path.getLength();                                 //not needed?
 	       //get lat/lng coordinates from path
 	       for (var i = 0; i < path.getLength(); i++) {
 		   coordinates.push({  //format corresponds to planCoordinates
@@ -271,12 +271,12 @@
    }
 
    console.log('from window');
-   var planCoordinatesGlbl = [
-       {lat: 47.19056, lng: 8.82532},
-       {lat: 47.18997, lng: 8.82302},
-       {lat: 47.18994, lng: 8.82180},
-       {lat: 47.18896, lng: 8.81960}
-   ];
+//   var planCoordinatesGlbl = [
+//       {lat: 47.19056, lng: 8.82532, z: 450.0},
+//       {lat: 47.18997, lng: 8.82302, z: 450.0},
+//       {lat: 47.18994, lng: 8.82180, z: 450.0},
+//       {lat: 47.18896, lng: 8.81960, z: 450.0}
+//   ];
    
    window.customElements.define(MyView1.is, MyView1);   
   </script>

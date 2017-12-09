@@ -17,7 +17,8 @@
     "webcomponentsjs": "webcomponents/webcomponentsjs#^1.0.0",
     "paper-input": "^2.0.4",
     "iron-icons": "^2.0.1",
-    "google-apis": "^2.0.0"
+    "google-apis": "^2.0.0",
+    "plotly-plot": "^0.5.0"
   },
   "resolutions": {
     "polymer": "^2.0.0"
