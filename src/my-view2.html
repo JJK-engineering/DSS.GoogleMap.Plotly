@@ -165,7 +165,8 @@
 
 	ready() {
 	    super.ready();
-	    console.log(this.data2);
+	    console.log('from ready');
+	    //console.log(this.data2);
 	    //console.log(this.data2[1].y[1]);
 	    this.loadCoord();                       //is this the rigth life cycle callback for loadCoord ??
 	}
@@ -180,7 +181,10 @@
 		var dist = getDistanceFromLatLonInKm(
 		    this.planCoordinates[i-1].lat, this.planCoordinates[i-1].lng,
 		    this.planCoordinates[i].lat, this.planCoordinates[i].lng) *1000;  //meters;
-		station.push(station[i-1] + dist); 
+		station.push(station[i-1] + dist);
+		// get elevation at chainage i
+
+		
 		console.log('this.planCoordinates[i]lat,lng ' ,
 			    this.planCoordinates[i].lat, this.planCoordinates[i].lng,
 			    dist);

@@ -136,6 +136,7 @@
 	       title: 'Maienberg',
 	       draggable: true,
 	   });
+
 	   
 	   console.log('this.planCoordinates',this.planCoordinates);
 	   //                                                            ToDo JK: do Number for all coordinates
@@ -161,19 +162,63 @@
 	   google.maps.event.addListener(this.alignment.getPath(), "set_at", alignmentChanged.bind(this));
 	   //console.log('alignment: this.alignment', this.alignment);  //defined
 	   this.alignment.setMap(map);
+	   
 	   function  alignmentChanged() {  //testing polyline Listener
 	       console.log('alignmentChanged');  
 	       console.log('alignmentChanged: this.alignment', this.alignment);
 	       console.log('alignmentChanged: this', this);
 	       var path = this.alignment.getPath();
 	       var coordinates = [];
+	       var elevations= [];
+	       var elev = 0;
 	       var len = path.getLength();                                 //not needed?
 	       //get lat/lng coordinates from path
 	       for (var i = 0; i < path.getLength(); i++) {
-		   coordinates.push({  //format corresponds to planCoordinates
-		       lat: path.getAt(i).lat(),
-		       lng: path.getAt(i).lng()
+		   // test getting elevation at coordinate lat/lng
+		   console.log('lat,lng', path.getAt(i).lat(), path.getAt(i).lng());
+		   elevator.getElevationForLocations({
+		       'locations': [{lat: path.getAt(i).lat(), lng: path.getAt(i).lng()}]
+		   }, function(results, status) {
+	       	       console.log('alignmentChanged: elevation at point is ' +
+				   results[0].elevation + ' m');
+		       console.log('function elev before ', elev);
+		       elev = results[0].elevation;
+		       console.log('function elev after ', elev);
+		       console.log('function results ', results);		       
+		       elevations.push(elev);                     
+		       console.log('elevations ', elevations);     //ok
+//////		       pushElevations.bind(this);                //coordinates returned empty
+		       ////return(elev);
 		   });
+		   
+		   // get lat, lng from alignment path and append to coordinates
+////		   console.log('elevator: elev ', elev);                            //undefined
+////		   console.log('elevator: elevations ', elevations);
+////		   console.log('elevator: elevations[0] ', elevations[0]);
+////		   coordinates.push({  //format corresponds to planCoordinates
+////		       lat: path.getAt(i).lat(),
+////		       lng: path.getAt(i).lng(),
+////		       z: elevations[i]
+//		       z: elevator.getElevationForLocations({
+//			   'locations': [{lat: path.getAt(i).lat(),
+//					  lng: path.getAt(i).lng()}].results[0].elevation  //undefined
+//			   })
+		   pushElevations();  
+
+
+//		   elevator.getElevationForLocations({
+//		       'locations': [{lat: path.getAt(i).lat(), lng: path.getAt(i).lng()}]
+//		   },function(results,status) {
+//		       console.log('elevator: results', results[0].elevation);
+//		   });  //0k
+
+//		   var temp;
+//		   temp = elevator.getElevationForLocations({
+//		       'locations': [{lat: path.getAt(i).lat(), lng: path.getAt(i).lng()}]
+//		   });  //cannot read property of undefined
+//		   console.log('elevator: temp', temp);
+
+		   console.log('alignmentChanged: coordinates', coordinates);		   
 	       };
 	       //console.log('coordinates', coordinates);
 	       //console.log('planCoordinatesGlbl', planCoordinatesGlbl);  //global variable
@@ -183,7 +228,69 @@
 	       this.planCoordinates = planCoordinatesGlbl;  //testing
 	       // with following: this.planCoordinates are updated and input coordinates update
 	       //this.alignment.setMap(map);	           //testing: setMap is not required
+	       console.log('alignmentChanged: coordinates', coordinates);
+
+	       function pushElevations() {
+		   console.log('pushElevations: elev ', elev);
+		   console.log('pushElevations: elevations ', elevations);
+		   console.log('pshElevations: elevations[0] ', elevations[0]);
+		   coordinates.push({  //format corresponds to planCoordinates
+		       lat: path.getAt(i).lat(),
+		       lng: path.getAt(i).lng(),
+		       z: elevations[i]
+		   });
+		   return coordinates;     //??
+	       };
+
+	   };	   
+
+	   
+	   var elevator = new google.maps.ElevationService;
+	   var mapElev;
+	   console.log('elevator ', elevator);
+
+	   elevator.getElevationForLocations({
+	       'locations': [mapCenter]
+	   }, function(results, status) {
+	       			       console.log('The elevation at this point is ' +
+						   results[0].elevation + ' meters.');
+	   });
+	   
+	   displayLocationElevation(mapCenter, elevator);	   
+///	   map.addListener('click', function(event) {
+///	       displayLocationElevation(event.latLng, elevator);
+///	   });                                                                     //just testing !!!
+           var infoWindow = new google.maps.InfoWindow;
+	   console.log('infoWindow', infoWindow);
+	   function displayLocationElevation(location, elevator) {
+	       // Initiate the location request
+
+	       console.log('elevator ', elevator);	       
+	       console.log('location', location);
+	       
+	       elevator.getElevationForLocations({
+		   'locations': [location]
+	       }, function(results, status) {
+		   infoWindow.setPosition(location);
+		   if (status === 'OK') {
+		       // Retrieve the first result
+		       if (results[0]) {
+			   // Open the infowindow indicating the elevation at the clicked position.
+			       infoWindow.setContent('The elevation at this point <br>is ' +
+						     results[0].elevation + ' meters.');
+			       console.log('The elevation at this point is ' +
+						     results[0].elevation + ' meters.');
+		       } else {
+			   infoWindow.setContent('No results found');
+			   console.log('No results found');			   
+		       }
+		   } else {
+		       infoWindow.setContent('Elevation service failed due to: ' + status);
+		       console.log('Elevation service failed due to: ' + status);		       
+		   }
+	       });
 	   }
+
 	   
 	   var imageBounds = {
 	       north: 47.19658,
