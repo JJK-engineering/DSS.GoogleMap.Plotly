@@ -165,30 +165,47 @@
 	   
 	   function  alignmentChanged() {  //testing polyline Listener
 	       console.log('alignmentChanged');  
-	       console.log('alignmentChanged: this.alignment', this.alignment);
-	       console.log('alignmentChanged: this', this);
+	       //console.log('alignmentChanged: this.alignment', this.alignment);  //ok
+	       //console.log('alignmentChanged: this', this);  //my-view1
 	       var path = this.alignment.getPath();
 	       var coordinates = [];
-	       var elevations= [];
+//	       var elevations = [];
+	       var geoCoords = [];
 	       var elev = 0;
-	       var len = path.getLength();                                 //not needed?
-	       //get lat/lng coordinates from path
+	       var ii = 0
+
+	       // get lat/lng coordinates from path
 	       for (var i = 0; i < path.getLength(); i++) {
-		   // test getting elevation at coordinate lat/lng
-		   console.log('lat,lng', path.getAt(i).lat(), path.getAt(i).lng());
+		   coordinates.push({
+		       lat: path.getAt(i).lat(),
+		       lng: path.getAt(i).lng(),
+		   });
+	       };		   
+	       console.log('alignmentChanged: coordinates', coordinates);		   
+
+	       for (var i = 0; i < path.getLength(); i++) {
+		   // get elevation at coordinate lat/lng
+		   //  better to get elevations along path                                           //ToDo: jjk
 		   elevator.getElevationForLocations({
 		       'locations': [{lat: path.getAt(i).lat(), lng: path.getAt(i).lng()}]
 		   }, function(results, status) {
-	       	       console.log('alignmentChanged: elevation at point is ' +
-				   results[0].elevation + ' m');
-		       console.log('function elev before ', elev);
 		       elev = results[0].elevation;
-		       console.log('function elev after ', elev);
-		       console.log('function results ', results);		       
-		       elevations.push(elev);                     
-		       console.log('elevations ', elevations);     //ok
-//////		       pushElevations.bind(this);                //coordinates returned empty
-		       ////return(elev);
+		       //console.log('elev ', elev);
+//		       elevations.push(elev);                     
+//		       console.log('alignmentChanged: elevations ', elevations);     //ok
+//		       elevationsGlbl = elevations;  //testing OK
+//		       console.log('alignmentChanged: coordinates', coordinates);
+//		       console.log('alignmentChanged: coordinates[ii] ',coordinates[ii]); 
+		       geoCoords.push({  //format corresponds to planCoordinates
+		           lat: coordinates[ii].lat,
+		           lng: coordinates[ii].lng,
+//			   //z: elevations[ii]
+			   z: elev
+		       });
+		       ii +=1;  //i resolves to upper limit of range in callback
+
+		       // define new var for locations and push .getAt lat and lng to locations above    //jjk
+		       // push locations lat,lng to coordinates                                          //jjk
 		   });
 		   
 		   // get lat, lng from alignment path and append to coordinates
@@ -203,8 +220,7 @@
 //			   'locations': [{lat: path.getAt(i).lat(),
 //					  lng: path.getAt(i).lng()}].results[0].elevation  //undefined
 //			   })
-		   pushElevations();  
-
+//////		   pushElevations();  
 
 //		   elevator.getElevationForLocations({
 //		       'locations': [{lat: path.getAt(i).lat(), lng: path.getAt(i).lng()}]
@@ -217,12 +233,13 @@
 //		       'locations': [{lat: path.getAt(i).lat(), lng: path.getAt(i).lng()}]
 //		   });  //cannot read property of undefined
 //		   console.log('elevator: temp', temp);
-
-		   console.log('alignmentChanged: coordinates', coordinates);		   
 	       };
-	       //console.log('coordinates', coordinates);
+	       
+//	       console.log('elevations ', elevations);     // empty since callback not completed
+	       console.log('coordinates', coordinates);    
 	       //console.log('planCoordinatesGlbl', planCoordinatesGlbl);  //global variable
 	       planCoordinatesGlbl = coordinates;            //does not update this.planCoordinates
+	       geoCoordsGlbl = geoCoords;            //does not update this.planCoordinates	       
 	       // without following: MyView1.properties.planCoordinates.value === planCoordinatesGlbl  //true
 	       //   but this.planCoordinates are not updated and input coordinates do not update
 	       this.planCoordinates = planCoordinatesGlbl;  //testing
@@ -230,22 +247,22 @@
 	       //this.alignment.setMap(map);	           //testing: setMap is not required
 	       console.log('alignmentChanged: coordinates', coordinates);
 
-	       function pushElevations() {
-		   console.log('pushElevations: elev ', elev);
-		   console.log('pushElevations: elevations ', elevations);
-		   console.log('pshElevations: elevations[0] ', elevations[0]);
-		   coordinates.push({  //format corresponds to planCoordinates
-		       lat: path.getAt(i).lat(),
-		       lng: path.getAt(i).lng(),
-		       z: elevations[i]
-		   });
-		   return coordinates;     //??
-	       };
+//	       function pushElevations() {
+//		   console.log('pushElevations: elev ', elev);
+//		   console.log('pushElevations: elevations ', elevations);
+//		   console.log('pshElevations: elevations[0] ', elevations[0]);
+//		   coordinates.push({  //format corresponds to planCoordinates
+//		       lat: path.getAt(i).lat(),
+//		       lng: path.getAt(i).lng(),
+//		       z: elevations[i]
+//		   });
+//		   return coordinates;     //??
+//	       };
 
 	   };	   
 
 	   
-	   var elevator = new google.maps.ElevationService;
+	   var elevator = new google.maps.ElevationService;  //testing
 	   var mapElev;
 	   console.log('elevator ', elevator);
 
@@ -256,7 +273,7 @@
 						   results[0].elevation + ' meters.');
 	   });
 	   
-	   displayLocationElevation(mapCenter, elevator);	   
+	   displayLocationElevation(mapCenter, elevator);  //testing
 ///	   map.addListener('click', function(event) {
 ///	       displayLocationElevation(event.latLng, elevator);
 ///	   });                                                                     //just testing !!!
@@ -384,6 +401,9 @@
 //       {lat: 47.18994, lng: 8.82180, z: 450.0},
 //       {lat: 47.18896, lng: 8.81960, z: 450.0}
 //   ];
+
+//   var elevationsGlbl;  //testing (will probably go into polymer property)
+   var geoCoordsGlbl;  //testing (will probably go into polymer property)
    
    window.customElements.define(MyView1.is, MyView1);   
   </script>
