@@ -24,38 +24,43 @@
 	 left: 30%;
          color: white;
      }
+     #load_map {
+	 position: absolute;
+	 left: 2%;
+     }
      #lat_i {                    <!-- testing -->
 	 position: relative;
 	 float: right;
 	 margin-right: 40px;
-	 margin-top: 0px;	 
-         color: red;
+	 margin-top: -20px;	 
+         color: black;
      }
      #lat_t {                    <!-- testing -->
 	 position: relative;
 	 float: right;
 	 margin-right: 10px;
-	 margin-top: 0px;	 
-         color: red;
+	 margin-top: -20px;	 
+         color: black;
      }
      #lng_i {                    <!-- testing -->
 	 position: relative;
 	 float: right;
 	 margin-right: 40px;
-	 margin-top: 10px;	 
-         color: red;
+	 margin-top: -10px;	 
+         color: black;
      }
      #lng_t {                    <!-- testing -->
 	 position: relative;
 	 float: right;
 	 margin-right: 10px;
-	 margin-top: 10px;	 
-         color: red;
+	 margin-top: -10px;	 
+         color: black;
      }
     </style>
 
+    <h3>Map View - Test Project</h3>
     <!-- testing coordinates, works for planCoordinates[0].lat) when loadMap() called, by calling mapLoaded() -->
-    <button on-click="loadMap">loadMap</button>
+    <button on-click="loadMap" id="load_map">loadMap</button>
     <!--                                                         ToDo JK: replace input with e.g. paper-input -->
     <!--                                                         ToDo JK: add on-tap handler -->
     <!--                                                         ToDo JK: on-tap also data writes to global var-->
@@ -66,12 +71,11 @@
     </template></div><br>
     <div><template is="dom-repeat" items="{{planCoordinates}}"
 		   plan-coordinates="{{planCoordinates}}">
-	<input id="lng_i" type="number" style="width:18mm" value="{{item.lng::input}}">
+	<input id="lng_i" type="number" style="width:17mm" value="{{item.lng::input}}">
 	<p id="lng_t">lng:</p>     
     </template></div><br>
 
     <div>
-	<h1>Map View</h1>
 	<google-maps-api id="map" on-api-load="mapLoaded" api-key="AIzaSyCy71TCJa_xLJQbCCdZu4dtYMNh8Nav7zw"
 			 version="3.exp" altendorf-trails="{{altendorfTrails}}"
 			 plan-coordinates="{{planCoordinates}}" alignment="{{alignment}}">
@@ -93,13 +97,23 @@
 		    value: null,
 		    notify: true,
 		},
-		planCoordinates: {
+		planCoordinates: {                                                                //testing
 		    type: Array,
-//		    value: planCoordinatesGlbl,
+		    //value: planCoordinatesGlbl,
 		    notify: true,
 		    observer: 'observeCoordinates',
 		},
-		alignment: {               //testing
+		alignment: {                                                                      //testing
+		    type: Object,
+		    value: null,
+		},
+		planCoordinates2: {
+		    type: Array,
+		    value: [{lat: 47.1899, lng: 8.8219}, {lat: 47.1999, lng: 8.8219}],            //testing
+		    notify: true,
+		    observer: 'observeCoordinates',
+		},
+		alignment2: {                                                                     //testing
 		    type: Object,
 		    value: null,
 		},
@@ -119,6 +133,7 @@
        mapLoaded() {
 	   console.log('google-maps-api loading');
 
+	   // display map
 	   var mapsAPI = this.shadowRoot.querySelector('google-maps-api');
 	   var mapCenter = {lat: 47.1899, lng: 8.8219};
 	   var map = new google.maps.Map(mapsAPI, {
@@ -130,6 +145,7 @@
 	       streetViewControl: false,
 	   });
 
+	   // display markers on map
 	   var marker = new google.maps.Marker({                
 	       map: map,
 	       position: mapCenter,
@@ -137,14 +153,14 @@
 	       draggable: true,
 	   });
 
-	   
+	   // display alignments on map
 	   console.log('this.planCoordinates',this.planCoordinates);
-	   //                                                            ToDo JK: do Number for all coordinates
-	   //                                                                                in on-tap handler???
-	   // better: mv Number to loadMap (and rename this to updateAlignment) !!!
-	   this.planCoordinates[0].lat=Number(this.planCoordinates[0].lat);
-	   console.log('this.planCoordinates[0].lat) ',this.planCoordinates[0].lat);
-	   //console.log('planCoordinates[0].lat',planCoordinates[0].lat);            //not defined  ??check
+	   // handling input to convert to number                            //ToDo JK: do in on-tap handler ???
+	   //   better: mv Number to loadMap (and rename this to updateAlignment) !!!
+	   for (var i = 0; i < this.planCoordinates.length; i++) {	   
+	       this.planCoordinates[i].lat=Number(this.planCoordinates[i].lat);
+	       this.planCoordinates[i].lng=Number(this.planCoordinates[i].lng);	       
+	   };
 	   this.alignment = new google.maps.Polyline({
 	       path: this.planCoordinates,
 	       geodesic: true,
@@ -155,21 +171,34 @@
 	       strokeWeight: 2,
 	   });
 	   console.log('mapLoaded: this.alignment ', this.alignment);
-	   // listener for polyline changes
+	   // listener for alignment (polyline) changes
 	   google.maps.event.addListener(this.alignment.getPath(), "dragend", alignmentChanged.bind(this));
 	   google.maps.event.addListener(this.alignment.getPath(), "insert_at", alignmentChanged.bind(this));
 	   google.maps.event.addListener(this.alignment.getPath(), "remove_at", alignmentChanged.bind(this));
 	   google.maps.event.addListener(this.alignment.getPath(), "set_at", alignmentChanged.bind(this));
 	   //console.log('alignment: this.alignment', this.alignment);  //defined
 	   this.alignment.setMap(map);
+
+	   //alignment2 = new this.alignment({  //Uncaught TypeError: this.alignment is not a constructor
+	                                        //  how to make an alignment child???
+	   this.alignment2 = new google.maps.Polyline({                                   //testing - ok
+	       path: [mapCenter, {lat: 47.1999, lng: 8.8219}],                      
+	       geodesic: true,
+	       editable: true,
+	       draggable: true,
+	       strokeColor: '#33FFBD',
+	       strokeOpacity: 1.0,
+	       strokeWeight: 2,
+	   });
+	   this.alignment2.setMap(map);
 	   
 	   function  alignmentChanged() {  //testing polyline Listener
 	       console.log('alignmentChanged');  
 	       //console.log('alignmentChanged: this.alignment', this.alignment);  //ok
 	       //console.log('alignmentChanged: this', this);  //my-view1
 	       var path = this.alignment.getPath();
+	       console.log('alignmentChanged: path ', path);  //testing
 	       var coordinates = [];
-//	       var elevations = [];
 	       var geoCoords = [];
 	       var elev = 0;
 	       var ii = 0
@@ -181,133 +210,94 @@
 		       lng: path.getAt(i).lng(),
 		   });
 	       };		   
-	       console.log('alignmentChanged: coordinates', coordinates);		   
-
+	       console.log('alignmentChanged: coordinates', coordinates);
+	       
+	       // get elevations
+	       //   get elevations along path (testing)                                              //ToDo: jjk
+	       var elevator = new google.maps.ElevationService;  //testing - works
+	       // test getting elevation for path
+	       console.log('elevator: coordinates ', coordinates);
+	       elevator.getElevationAlongPath({
+		   //'path': path,
+		   'path': coordinates,
+		   'samples': 4
+	       }, function(elevations, status) {
+		   console.log('elevator: elevations ',elevations);
+	       });
+	       // get elevation at coordinate lat/lng	       	       
 	       for (var i = 0; i < path.getLength(); i++) {
-		   // get elevation at coordinate lat/lng
-		   //  better to get elevations along path                                           //ToDo: jjk
 		   elevator.getElevationForLocations({
 		       'locations': [{lat: path.getAt(i).lat(), lng: path.getAt(i).lng()}]
 		   }, function(results, status) {
 		       elev = results[0].elevation;
 		       //console.log('elev ', elev);
-//		       elevations.push(elev);                     
-//		       console.log('alignmentChanged: elevations ', elevations);     //ok
-//		       elevationsGlbl = elevations;  //testing OK
-//		       console.log('alignmentChanged: coordinates', coordinates);
-//		       console.log('alignmentChanged: coordinates[ii] ',coordinates[ii]); 
-		       geoCoords.push({  //format corresponds to planCoordinates
+		       geoCoords.push({
 		           lat: coordinates[ii].lat,
 		           lng: coordinates[ii].lng,
-//			   //z: elevations[ii]
 			   z: elev
 		       });
 		       ii +=1;  //i resolves to upper limit of range in callback
-
-		       // define new var for locations and push .getAt lat and lng to locations above    //jjk
-		       // push locations lat,lng to coordinates                                          //jjk
+		                //  quick fix, api calls to google.maps return out of sequence
+		                //  geting elevations for path will fix                              //ToDo: jjk
 		   });
-		   
-		   // get lat, lng from alignment path and append to coordinates
-////		   console.log('elevator: elev ', elev);                            //undefined
-////		   console.log('elevator: elevations ', elevations);
-////		   console.log('elevator: elevations[0] ', elevations[0]);
-////		   coordinates.push({  //format corresponds to planCoordinates
-////		       lat: path.getAt(i).lat(),
-////		       lng: path.getAt(i).lng(),
-////		       z: elevations[i]
-//		       z: elevator.getElevationForLocations({
-//			   'locations': [{lat: path.getAt(i).lat(),
-//					  lng: path.getAt(i).lng()}].results[0].elevation  //undefined
-//			   })
-//////		   pushElevations();  
-
-//		   elevator.getElevationForLocations({
-//		       'locations': [{lat: path.getAt(i).lat(), lng: path.getAt(i).lng()}]
-//		   },function(results,status) {
-//		       console.log('elevator: results', results[0].elevation);
-//		   });  //0k
-
-//		   var temp;
-//		   temp = elevator.getElevationForLocations({
-//		       'locations': [{lat: path.getAt(i).lat(), lng: path.getAt(i).lng()}]
-//		   });  //cannot read property of undefined
-//		   console.log('elevator: temp', temp);
 	       };
 	       
-//	       console.log('elevations ', elevations);     // empty since callback not completed
-	       console.log('coordinates', coordinates);    
-	       //console.log('planCoordinatesGlbl', planCoordinatesGlbl);  //global variable
-	       planCoordinatesGlbl = coordinates;            //does not update this.planCoordinates
-	       geoCoordsGlbl = geoCoords;            //does not update this.planCoordinates	       
+	       planCoordinatesGlbl = coordinates;  //for texting           //does not update this.planCoordinates
+	       geoCoordsGlbl = geoCoords;  //for testing
 	       // without following: MyView1.properties.planCoordinates.value === planCoordinatesGlbl  //true
 	       //   but this.planCoordinates are not updated and input coordinates do not update
-	       this.planCoordinates = planCoordinatesGlbl;  //testing
 	       // with following: this.planCoordinates are updated and input coordinates update
-	       //this.alignment.setMap(map);	           //testing: setMap is not required
-	       console.log('alignmentChanged: coordinates', coordinates);
-
-//	       function pushElevations() {
-//		   console.log('pushElevations: elev ', elev);
-//		   console.log('pushElevations: elevations ', elevations);
-//		   console.log('pshElevations: elevations[0] ', elevations[0]);
-//		   coordinates.push({  //format corresponds to planCoordinates
-//		       lat: path.getAt(i).lat(),
-//		       lng: path.getAt(i).lng(),
-//		       z: elevations[i]
-//		   });
-//		   return coordinates;     //??
-//	       };
-
+	       console.log('test-1 begins');
+	       this.planCoordinates = planCoordinatesGlbl;  //testing
+	       console.log('test-1 ends');
+	       //this.alignment.setMap(map);	           //testing: setMap is not required for update
+	       console.log('alignmentChanged completed');  	       
 	   };	   
-
 	   
-	   var elevator = new google.maps.ElevationService;  //testing
-	   var mapElev;
-	   console.log('elevator ', elevator);
-
-	   elevator.getElevationForLocations({
-	       'locations': [mapCenter]
-	   }, function(results, status) {
-	       			       console.log('The elevation at this point is ' +
-						   results[0].elevation + ' meters.');
-	   });
-	   
-	   displayLocationElevation(mapCenter, elevator);  //testing
+//	   var mapElev;
+//	   console.log('elevator ', elevator);
+//
+//	   elevator.getElevationForLocations({
+//	       'locations': [mapCenter]
+//	   }, function(results, status) {
+//	       			       console.log('The elevation at this point is ' +
+//						   results[0].elevation + ' meters.');
+//	   });
+//	   
+//	   displayLocationElevation(mapCenter, elevator);  //testing
 ///	   map.addListener('click', function(event) {
 ///	       displayLocationElevation(event.latLng, elevator);
 ///	   });                                                                     //just testing !!!
-           var infoWindow = new google.maps.InfoWindow;
-	   console.log('infoWindow', infoWindow);
-	   function displayLocationElevation(location, elevator) {
-	       // Initiate the location request
-
-	       console.log('elevator ', elevator);	       
-	       console.log('location', location);
-	       
-	       elevator.getElevationForLocations({
-		   'locations': [location]
-	       }, function(results, status) {
-		   infoWindow.setPosition(location);
-		   if (status === 'OK') {
-		       // Retrieve the first result
-		       if (results[0]) {
-			   // Open the infowindow indicating the elevation at the clicked position.
-			       infoWindow.setContent('The elevation at this point <br>is ' +
-						     results[0].elevation + ' meters.');
-			       console.log('The elevation at this point is ' +
-						     results[0].elevation + ' meters.');
-		       } else {
-			   infoWindow.setContent('No results found');
-			   console.log('No results found');			   
-		       }
-		   } else {
-		       infoWindow.setContent('Elevation service failed due to: ' + status);
-		       console.log('Elevation service failed due to: ' + status);		       
-		   }
-	       });
-	   }
-
+//           var infoWindow = new google.maps.InfoWindow;
+//	   console.log('infoWindow', infoWindow);
+//	   function displayLocationElevation(location, elevator) {
+//	       // Initiate the location request
+//
+//	       console.log('elevator ', elevator);	       
+//	       console.log('location', location);
+//	       
+//	       elevator.getElevationForLocations({
+//		   'locations': [location]
+//	       }, function(results, status) {
+//		   infoWindow.setPosition(location);
+//		   if (status === 'OK') {
+//		       // Retrieve the first result
+//		       if (results[0]) {
+//			   // Open the infowindow indicating the elevation at the clicked position.
+//			       infoWindow.setContent('The elevation at this point <br>is ' +
+//						     results[0].elevation + ' meters.');
+//			       console.log('The elevation at this point is ' +
+//						     results[0].elevation + ' meters.');
+//		       } else {
+//			   infoWindow.setContent('No results found');
+//			   console.log('No results found');			   
+//		       }
+//		   } else {
+//		       infoWindow.setContent('Elevation service failed due to: ' + status);
+//		       console.log('Elevation service failed due to: ' + status);		       
+//		   }
+//	       });
+//	   }
 	   
 	   var imageBounds = {
 	       north: 47.19658,
@@ -387,8 +377,8 @@
 	                                  // alignment.SetMap would be preferred to this.mapLoaded
        }
 
-       observeCoordinates() {  //testing, never fires (probably because tems are inside an array)
-	                       //event listeners may be preferred method
+       observeCoordinates() {  //testing, fires when this.planCoordinates = planCoordinatesGlbl executed
+	                       //event listeners may be preferred method ???
 	   console.log('observeCoordinates');
 	   console.log('this.planCoordinates ', this.planCoordinates);
        }
