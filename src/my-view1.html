@@ -107,15 +107,30 @@
 		    type: Object,
 		    value: null,
 		},
-		planCoordinates2: {
-		    type: Array,
-		    value: [{lat: 47.1899, lng: 8.8219}, {lat: 47.1999, lng: 8.8219}],            //testing
-		    notify: true,
-		    observer: 'observeCoordinates',
-		},
+//		planCoordinates2: {
+//		    type: Array,
+//		    value: [{lat: 47.1899, lng: 8.8219}, {lat: 47.1999, lng: 8.8219}],            //testing
+//		    notify: true,
+//		    observer: 'observeCoordinates',
+//		},
 		alignment2: {                                                                     //testing
 		    type: Object,
 		    value: null,
+		},
+		terrainGeoCoords: {
+		    type: Array,
+		    value: [
+			{lat: 47.19056, lng: 8.82532, z: 450.0},
+			{lat: 47.18997, lng: 8.82302, z: 450.0},
+			{lat: 47.18994, lng: 8.82180, z: 450.0},
+			{lat: 47.18896, lng: 8.81960, z: 450.0}
+		    ],
+		    observer: 'observeGeoCoords',
+		},
+		terrainProfile: {		
+		    type: Array,
+		    value: [],
+		    observer: 'observeProfile',				 
 		},
 	    }
        }
@@ -135,7 +150,7 @@
 
 	   // display map
 	   var mapsAPI = this.shadowRoot.querySelector('google-maps-api');
-	   var mapCenter = {lat: 47.1899, lng: 8.8219};
+	   var mapCenter = {lat: 47.1899, lng: 8.8219};  //a defined Project center location
 	   var map = new google.maps.Map(mapsAPI, {
 	       center: mapCenter,
 	       zoom: 13,
@@ -145,6 +160,7 @@
 	       streetViewControl: false,
 	   });
 
+	   
 	   // display markers on map
 	   var marker = new google.maps.Marker({                
 	       map: map,
@@ -153,8 +169,9 @@
 	       draggable: true,
 	   });
 
+	   
 	   // display alignments on map
-	   console.log('this.planCoordinates',this.planCoordinates);
+	   console.log('mapLoaded: this.planCoordinates',this.planCoordinates);  //testing
 	   // handling input to convert to number                            //ToDo JK: do in on-tap handler ???
 	   //   better: mv Number to loadMap (and rename this to updateAlignment) !!!
 	   for (var i = 0; i < this.planCoordinates.length; i++) {	   
@@ -162,7 +179,8 @@
 	       this.planCoordinates[i].lng=Number(this.planCoordinates[i].lng);	       
 	   };
 	   this.alignment = new google.maps.Polyline({
-	       path: this.planCoordinates,
+	       //path: this.planCoordinates,
+	       path: this.terrainGeoCoords,
 	       geodesic: true,
 	       editable: true,
 	       draggable: true,
@@ -170,13 +188,13 @@
 	       strokeOpacity: 1.0,
 	       strokeWeight: 2,
 	   });
-	   console.log('mapLoaded: this.alignment ', this.alignment);
+
 	   // listener for alignment (polyline) changes
+	   //console.log('mapLoaded: this.alignment ', this.alignment);  //._Lg
 	   google.maps.event.addListener(this.alignment.getPath(), "dragend", alignmentChanged.bind(this));
 	   google.maps.event.addListener(this.alignment.getPath(), "insert_at", alignmentChanged.bind(this));
 	   google.maps.event.addListener(this.alignment.getPath(), "remove_at", alignmentChanged.bind(this));
 	   google.maps.event.addListener(this.alignment.getPath(), "set_at", alignmentChanged.bind(this));
-	   //console.log('alignment: this.alignment', this.alignment);  //defined
 	   this.alignment.setMap(map);
 
 	   //alignment2 = new this.alignment({  //Uncaught TypeError: this.alignment is not a constructor
@@ -192,16 +210,14 @@
 	   });
 	   this.alignment2.setMap(map);
 	   
-	   function  alignmentChanged() {  //testing polyline Listener
-	       console.log('alignmentChanged');  
-	       //console.log('alignmentChanged: this.alignment', this.alignment);  //ok
+	   function  alignmentChanged() {  //alignment change Listener
+	       console.log('alignmentChanged');
 	       //console.log('alignmentChanged: this', this);  //my-view1
 	       var path = this.alignment.getPath();
-	       console.log('alignmentChanged: path ', path);  //testing
 	       var coordinates = [];
-	       var geoCoords = [];
-	       var elev = 0;
-	       var ii = 0
+	       var self = this;
+	       var terrainGeoCoords = this.terrainGeoCoords;  //lat:, lng:, z: are surface trace of alignment
+	       var terrainProfile = this.terrainProfile;      //terrain elevations along alignment
 
 	       // get lat/lng coordinates from path
 	       for (var i = 0; i < path.getLength(); i++) {
@@ -210,94 +226,54 @@
 		       lng: path.getAt(i).lng(),
 		   });
 	       };		   
-	       console.log('alignmentChanged: coordinates', coordinates);
+	       console.log('alignmentChanged: coordinates', coordinates);  //testing -ok
 	       
-	       // get elevations
-	       //   get elevations along path (testing)                                              //ToDo: jjk
-	       var elevator = new google.maps.ElevationService;  //testing - works
-	       // test getting elevation for path
-	       console.log('elevator: coordinates ', coordinates);
-	       elevator.getElevationAlongPath({
-		   //'path': path,
-		   'path': coordinates,
-		   'samples': 4
-	       }, function(elevations, status) {
-		   console.log('elevator: elevations ',elevations);
-	       });
-	       // get elevation at coordinate lat/lng	       	       
-	       for (var i = 0; i < path.getLength(); i++) {
-		   elevator.getElevationForLocations({
-		       'locations': [{lat: path.getAt(i).lat(), lng: path.getAt(i).lng()}]
-		   }, function(results, status) {
-		       elev = results[0].elevation;
-		       //console.log('elev ', elev);
-		       geoCoords.push({
-		           lat: coordinates[ii].lat,
-		           lng: coordinates[ii].lng,
-			   z: elev
+	       // get elevations at lat/lng coordinates
+	       var elevator = new google.maps.ElevationService;
+	       elevator.getElevationForLocations({
+		   'locations': coordinates
+	       }, function(results, status) {
+		   self.terrainGeoCoords = [];
+		   console.log('getElevationForLocations: status ', status);		   
+		   //console.log('elevator: location elevation results ', results);  //testing
+		   for (var i = 0; i < results.length; i++) {
+		       self.terrainGeoCoords.push({
+		           lat: coordinates[i].lat,
+		           lng: coordinates[i].lng,
+			   z: results[i].elevation
 		       });
-		       ii +=1;  //i resolves to upper limit of range in callback
-		                //  quick fix, api calls to google.maps return out of sequence
-		                //  geting elevations for path will fix                              //ToDo: jjk
-		   });
-	       };
+		   };
+////		   terrainGeoCoordsGlbl = terrainGeoCoords;
+////		   console.log('getElevationForLocations: terrainGeoCoords ', terrainGeoCoords);  //defined
+////		   console.log('getElevationForLocations: terrainGeoCoordsGlbl ', terrainGeoCoordsGlbl); //defined
+	       });
+		   
+	       // get elevations along alignment path
+	       elevator.getElevationAlongPath({  //...Path.bind(this) does not change 'this' context in fucntion
+		   'path': coordinates,
+		   'samples': 100  //API doc: must be a value between 2 and 512 inclusive
+	       }, function(elevations, status) {
+		   console.log('getElevationAlongPath: status ', status);
+		   //console.log('elevator: this ', this);  //Window (with or without .bind(this)
+		   //console.log('getElevationAlongPath: self ', self);  //my-view1
+		   self.terrainProfile = elevations;
+	       });
 	       
-	       planCoordinatesGlbl = coordinates;  //for texting           //does not update this.planCoordinates
-	       geoCoordsGlbl = geoCoords;  //for testing
+////	       planCoordinatesGlbl = coordinates;  //for texting           //does not update this.planCoordinates
+////	       console.log('alignmentChanged: terrainGeoCoords', terrainGeoCoords);  //null
+////	       terrainGeoCoordsGlbl = terrainGeoCoords;  //for testing
+////	       console.log('alignmentChanged: terrainProfile ', terrainProfile);  //null
+////	       console.log('alignmentChanged: this.terrainProfile ', this.terrainProfile);  //null	       
+////	       terrainProfileGlbl = terrainProfile;  //for testing
 	       // without following: MyView1.properties.planCoordinates.value === planCoordinatesGlbl  //true
 	       //   but this.planCoordinates are not updated and input coordinates do not update
 	       // with following: this.planCoordinates are updated and input coordinates update
-	       console.log('test-1 begins');
-	       this.planCoordinates = planCoordinatesGlbl;  //testing
-	       console.log('test-1 ends');
+//	       this.planCoordinates = planCoordinatesGlbl;  //testing
+	       this.planCoordinates = terrainGeoCoords;  //testing (null - asynchronous callback not complete)
 	       //this.alignment.setMap(map);	           //testing: setMap is not required for update
 	       console.log('alignmentChanged completed');  	       
 	   };	   
-	   
-//	   var mapElev;
-//	   console.log('elevator ', elevator);
-//
-//	   elevator.getElevationForLocations({
-//	       'locations': [mapCenter]
-//	   }, function(results, status) {
-//	       			       console.log('The elevation at this point is ' +
-//						   results[0].elevation + ' meters.');
-//	   });
-//	   
-//	   displayLocationElevation(mapCenter, elevator);  //testing
-///	   map.addListener('click', function(event) {
-///	       displayLocationElevation(event.latLng, elevator);
-///	   });                                                                     //just testing !!!
-//           var infoWindow = new google.maps.InfoWindow;
-//	   console.log('infoWindow', infoWindow);
-//	   function displayLocationElevation(location, elevator) {
-//	       // Initiate the location request
-//
-//	       console.log('elevator ', elevator);	       
-//	       console.log('location', location);
-//	       
-//	       elevator.getElevationForLocations({
-//		   'locations': [location]
-//	       }, function(results, status) {
-//		   infoWindow.setPosition(location);
-//		   if (status === 'OK') {
-//		       // Retrieve the first result
-//		       if (results[0]) {
-//			   // Open the infowindow indicating the elevation at the clicked position.
-//			       infoWindow.setContent('The elevation at this point <br>is ' +
-//						     results[0].elevation + ' meters.');
-//			       console.log('The elevation at this point is ' +
-//						     results[0].elevation + ' meters.');
-//		       } else {
-//			   infoWindow.setContent('No results found');
-//			   console.log('No results found');			   
-//		       }
-//		   } else {
-//		       infoWindow.setContent('Elevation service failed due to: ' + status);
-//		       console.log('Elevation service failed due to: ' + status);		       
-//		   }
-//	       });
-//	   }
+
 	   
 	   var imageBounds = {
 	       north: 47.19658,
@@ -313,6 +289,7 @@
 	   );
 	   //console.log('altendorfTrails',this.altendorfTrails);
 	   this.altendorfTrails.setMap(map);  //required if map: not set
+
 	   
 	   // Try HTML5 geolocation (quickly hacked from google-maps-api example for js,
 	   // but it works)
@@ -343,11 +320,11 @@
 				     'Error: Your browser doesn\'t support geolocation.');
 	       infoWindow.open(window.map);
 	   }	       
-	   geoLocate()
+	   //geoLocate()  //do not geolocate unless requested, as geolocate not suitable for office use
 	   
            // add Listner to (re)gelocate
 	   map.addListener('click', function() {
-	       console.log('click');
+	       console.log('map.addListener: click');  //works on map, does not work on overlay
 	       geoLocate();		   
 	   })
        };
@@ -359,11 +336,14 @@
        };
 
        loadMap() {  //testing
+          	    //zoom level not preserved                                                      //ToDo: JK
 	   console.log('loadMap');
-	   console.log('this ', this);	   
-	   console.log('this.planCoordinates', this.planCoordinates);
-	   console.log('planCoordinatesGlbl', planCoordinatesGlbl);
-	   console.log('test', this.planCoordinates === planCoordinatesGlbl);  //true after <input>
+	   console.log('loadMap: this ', this);	   
+	   console.log('loadMap: this.terrainProfile ', this.terrainProfile);  //updated
+	   console.log('loadMap: this.terrainGeoCoords ', this.terrainGeoCoords);  //updated	   
+	   console.log('loadMap: this.planCoordinates', this.planCoordinates);
+	   console.log('loadMap: planCoordinatesGlbl', planCoordinatesGlbl);
+	   console.log('loadMap: test', this.planCoordinates === planCoordinatesGlbl);  //true after <input>
 	   //console.log('loadMap: alignment ', alignment);  //not defined (as expected)
 	   console.log('loadMap: this.alignment ', this.alignment);  //null (property value: null)
 	   //console.log('this.planCoordinates' ,this.planCoordinates);
@@ -372,15 +352,24 @@
 	                                            //  -dragging polyline??? does not set this.planCoordinates???
 	                                       //loadMap not needed to update this.planCoordinates after input!!
 	   this.mapLoaded();
-	   console.log('this.alignment', this.alignment);
+	   console.log('loadMap: this.alignment', this.alignment);
+	   console.log('loadMap completed');
 	   //this.alignment.setMap(map);  //map is not defined, need to make map a polymer property
 	                                  // alignment.SetMap would be preferred to this.mapLoaded
        }
 
-       observeCoordinates() {  //testing, fires when this.planCoordinates = planCoordinatesGlbl executed
+       observeCoordinates() {  //testing, fires when this.planCoordinates = terrainGeoCoords executed
 	                       //event listeners may be preferred method ???
 	   console.log('observeCoordinates');
-	   console.log('this.planCoordinates ', this.planCoordinates);
+	   console.log('observeCoordinates: this.planCoordinates ', this.planCoordinates);
+       }
+       observeGeoCoords() {
+	   console.log('observeGeoCoords');
+	   console.log('observeGeoCoords: this.terrainGeoCoords ', this.terrainGeoCoords);
+       }
+       observeProfile() {
+	   console.log('observeProfile');
+	   console.log('observeProfile: this.terrainProfile ', this.terrainProfile);
        }
    }
 
@@ -392,9 +381,9 @@
 //       {lat: 47.18896, lng: 8.81960, z: 450.0}
 //   ];
 
-//   var elevationsGlbl;  //testing (will probably go into polymer property)
-   var geoCoordsGlbl;  //testing (will probably go into polymer property)
-   
+   var terrainGeoCoordsGlbl;  //testing (will probably go into polymer property)
+//   var terrainProfileGlbl;  //testing (made polymer property)   
+
    window.customElements.define(MyView1.is, MyView1);   
   </script>
 </dom-module>
