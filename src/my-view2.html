@@ -22,7 +22,7 @@
 	<h1>plotly charting testing</h1>
 	<div id="profile">
 	    <my-plot layout="{{layout2}}" data="{{data2}}"
-		     plan-coordinates="{{planCoordinates}}">
+		     terrain-geo-coords="{{terrainGeoCoords}}" terrain-profile="{{terrainProfile}}">
 	    </my-plot>
 	    <!--test data binding to array item (index selects trace), works-->
 	    <!-- <div>[[arrayItem(data2.*, 1, 'y')]]</div>  
@@ -42,11 +42,11 @@
 
 	<div id="results">
 	    <my-plot layout="{{layout}}" data="{{data}}"
-		     plan-coordinates="{{planCoordinates}}">		     
+		     terrain-geo-coords="{{terrainGeoCoords}}" terrain-profile="{{terrainProfile}}">
 	    </my-plot>
 	    <template></template>                     <!--   new y (=cover) is a string value ??   ToDo JK -->
 	    <div><paper-icon-button icon="check-box" on-tap="recomputeRockcover"
-				    plan-coordinates="{{planCoordinates}}">
+			      terrain-geo-coords="{{terrainGeoCoords}}" terrain-profile="{{terrainProfile}}">
 	    </paper-icon-button>calculate</div>
 	</div>
 
@@ -131,7 +131,8 @@
 		trace6: {
 		    computed: 'computeRockcover(trace3,trace4)',  
 		    type: Object,
-		    notify: true
+		    notify: true,
+		    //observer:  //add ???
 		},
 		data: {                                   //results
 		    computed: 'computeResults(trace6)',
@@ -143,10 +144,14 @@
 		    type: Array,
 		    notify: true
 		},
-		planCoordinates: {
+		terrainGeoCoords: {
 		    type: Array,
 		    notify: true,
 		},
+		terrainProfile: {
+		    type: Array,
+		    notify: true,
+		},	    
 	    }
 	}
 
@@ -156,45 +161,52 @@
 	     ]
 	 }
 	
-//       constructor() {
-	connecteCallback() {
+//       constructor() {  //this.loadCoord() -> this.terrainGeoCoords etc. undefined
+////	connectedCallback() {  //this.loadCoord() -> this.terrainGeoCoords etc. undefined
 //	   super();
-	    console.log('from constructor');
-//	    this.loadCoord();                       //update button doe not call
-	}
+////	   console.log('from connectedCallbackconstructor');
+////	   this.loadCoord();                       //update button doe not call ??? CHECK AGAIN
+////	}
 
 	ready() {
 	    super.ready();
 	    console.log('from ready');
 	    //console.log(this.data2);
 	    //console.log(this.data2[1].y[1]);
+	    console.log('ready: this.trace3 ', this.trace3);
+	    console.log('ready: this.trace4 ', this.trace4);	    	    	    
 	    this.loadCoord();                       //is this the rigth life cycle callback for loadCoord ??
 	}
 
 	loadCoord() {
 	    console.log('from loadCoord');
-
-	    console.log('loadCoord: this.planCoordinates ', this.planCoordinates);  //undefined
+	    console.log('loadCoord: this.terrainGeoCoords ', this.terrainGeoCoords);  //ok, updated
+	    console.log('loadCoord: this.terrainProfile ', this.terrainProfile);  //ok, updated
+	    console.log('loadCoord: this.trace3 ', this.trace3);
+	    console.log('loadCoord: this.trace4 ', this.trace4);	    
 	    var station = [0.0];
+	    this.trace3.y = [];  //reinitialize terrain profile elevations
 	    // calculate stationing along alignment
-	    for (var i = 1; i <this.planCoordinates.length; i++) {
+	    for (var i = 1; i <this.terrainGeoCoords.length; i++) {	    
 		var dist = getDistanceFromLatLonInKm(
-		    this.planCoordinates[i-1].lat, this.planCoordinates[i-1].lng,
-		    this.planCoordinates[i].lat, this.planCoordinates[i].lng) *1000;  //meters;
+		    this.terrainGeoCoords[i-1].lat, this.terrainGeoCoords[i-1].lng,
+		    this.terrainGeoCoords[i].lat, this.terrainGeoCoords[i].lng) *1000;  //meters;
 		station.push(station[i-1] + dist);
-		// get elevation at chainage i
-
-		
-		console.log('this.planCoordinates[i]lat,lng ' ,
-			    this.planCoordinates[i].lat, this.planCoordinates[i].lng,
-			    dist);
+	    }
+	    // get elevation along chainage
+	    for (var i = 0; i <this.terrainGeoCoords.length; i++) {	    	    
+		this.trace3.y.push(this.terrainGeoCoords[i].z);  //terrain profile elevations
 	    }
 	    console.log('station ',station);
 	    chainage = station;                //is set after plot data is defined (e.g. after ready), fix!!!
 	    console.log('loadCoord: this.trace3.x ', this.trace3.x);
-	    this.trace4.x = station;
-	    console.log('loadCoord: this.trace3.x ', this.trace3.x);	    
+	    // following two statement seem not necessary, station already assigned in property!!!
+	    this.trace4.x = station;  //alignment stationion, elevation not changed by alignment change on map
+	    this.trace3.x = station;  //terrain profile stationing
+	    console.log('loadCoord: this.terrainGeoCoords ',this.terrainGeoCoords);
 	    console.log('loadCoord: this.trace3 ', this.trace3);
+	    console.log('loadCoord: this.trace4 ', this.trace4);	    
+	    console.log('loadCoord: this.trace3.y ', this.trace3.y);	    
 	    
 	    function getDistanceFromLatLonInKm(lat1,lon1,lat2,lon2) {
 		var R = 6371; // Radius of the earth in km
@@ -253,12 +265,11 @@
 	    var len=this.trace6.y.length;
 	    for (var i = 0, len = this.trace6.y.length; i < len; ++i) {  //replace y with rockcover
 	    	        this.shift('trace6.y');  //removes last array item
-	    	        this.push('trace6.y',rockcover[i])};  //add item i from rcockcover to front of array
-	    //console.log(this.trace4);
-	    //console.log(this.trace6);
-	    //console.log(this.data);
-	    console.log('this.planCoordinates ', this.planCoordinates);  //undefined
-	    console.log('this.trace3 ', this.trace3);
+	    	        this.push('trace6.y',rockcover[i])  //add item i from rcockcover to front of array
+	                this.shift('trace6.x');
+	                this.push('trace6.x',chainage[i])};
+	    //console.log('recomputeRockcover: this.trace6 ', this.trace6);
+	    //console.log('recomputeRockcover: this.data ', this.data);
 	    return this.data;
 	}
 	
@@ -271,13 +282,11 @@
     }
 
    //alignment input data
-   var chainage=[100,1100, 2000, 3000, 3900];
+   var chainage=[100, 1100, 2000, 3000];
 //   var chainage = [];
-   var terrainElev=[250,300, 250,270, 200];
-   var alignmentElev=[175,170, 165, 160, 100];
+   var terrainElev=[250, 300, 250, 270];
+   var alignmentElev=[175,170, 165, 160];
 
-   //console.log(planCoordinatesGlbl);  //not defined
-   
    window.customElements.define(MyView2.is, MyView2);
   </script>
 </dom-module>

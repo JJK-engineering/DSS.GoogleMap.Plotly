@@ -106,8 +106,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             attr-for-selected="name"
             fallback-selection="view404"
             role="main">
-          <my-view1 name="view1" plan-coordinates="{{planCoordinates}}"></my-view1>
-          <my-view2 name="view2" plan-coordinates="{{planCoordinates}}"></my-view2>
+            <my-view1 name="view1" plan-coordinates="{{planCoordinates}}"
+		      terrain-geo-coords="{{terrainGeoCoords}}" terrain-profile="{{terrainProfile}}">
+	    </my-view1>
+            <my-view2 name="view2" plan-coordinates="{{planCoordinates}}"
+		      terrain-geo-coords="{{terrainGeoCoords}}" terrain-profile="{{terrainProfile}}">
+	    </my-view2>
           <my-view3 name="view3"></my-view3>
           <my-view404 name="view404"></my-view404>
         </iron-pages>
@@ -130,12 +134,24 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           subroute: String,
           // This shouldn't be neccessary, but the Analyzer isn't picking up
           // Polymer.Element#rootPath
-         rootPath: String,
-	 planCoordinates: {
+          rootPath: String,
+	    
+	  // DSS variables  
+	  planCoordinates: {
 	     type: Array,
-	     value: planCoordinatesGlbl,                                               //testing
+	     value: planCoordinatesGlbl,                                              //testing
 	     notify: true,
-	 },
+	  },
+	  terrainGeoCoords: {
+	     type: Array,
+	     value: terrainGeoCoordsGlbl,                                             //testing
+	     notify: true,
+	  },
+	  terrainProfile: {
+	     type: Array,
+	     value: terrainProfileGlbl,                                               //testing
+	     notify: true,
+	  },	    
         };
       }
 
@@ -165,6 +181,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             this._showPage404.bind(this),
             true);
 	console.log('_pageChanged: this.planCoordinates ', this.planCoordinates);  //testing
+        console.log('_pageChanged: this.terrainGeoCoords ', this.terrainGeoCoords);  //testing
+	console.log('_pageChanged: this.terrainProfile ', this.terrainProfile);  //testing	  
       }
 
       _showPage404() {
@@ -178,7 +196,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
        {lat: 47.18994, lng: 8.82180, z: 450.0},
        {lat: 47.18896, lng: 8.81960, z: 450.0}
    ];   
-
+   var terrainProfileGlbl = [
+       {lat: 47.19056, lng: 8.82532, z: 450.0},
+       {lat: 47.18997, lng: 8.82302, z: 450.0},
+       {lat: 47.18994, lng: 8.82180, z: 450.0},
+       {lat: 47.18896, lng: 8.81960, z: 450.0}
+   ];   
+   var terrainGeoCoordsGlbl = [
+       {lat: 47.19056, lng: 8.82532, z: 450.0},
+       {lat: 47.18997, lng: 8.82302, z: 450.0},
+       {lat: 47.18994, lng: 8.82180, z: 450.0},
+       {lat: 47.18896, lng: 8.81960, z: 450.0}
+   ];
+			      
     window.customElements.define(MyApp.is, MyApp);
   </script>
 </dom-module>

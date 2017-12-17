@@ -65,12 +65,14 @@
     <!--                                                         ToDo JK: add on-tap handler -->
     <!--                                                         ToDo JK: on-tap also data writes to global var-->
     <div><template is="dom-repeat" items="{{planCoordinates}}"
-		   plan-coordinates="{{planCoordinates}}">
+		   plan-coordinates="{{planCoordinates}}"
+		   terrain-geo-coords="{{terrainGeoCoords}}" terrain-profile="{{terrainProfile}}">
 	<input id="lat_i" type="number" style="width:18mm" value="{{item.lat::input}}">
 	<p id="lat_t">lat:</p>
     </template></div><br>
     <div><template is="dom-repeat" items="{{planCoordinates}}"
-		   plan-coordinates="{{planCoordinates}}">
+		   plan-coordinates="{{planCoordinates}}"
+		   terrain-geo-coords="{{terrainGeoCoords}}" terrain-profile="{{terrainProfile}}">
 	<input id="lng_i" type="number" style="width:17mm" value="{{item.lng::input}}">
 	<p id="lng_t">lng:</p>     
     </template></div><br>
@@ -78,7 +80,8 @@
     <div>
 	<google-maps-api id="map" on-api-load="mapLoaded" api-key="AIzaSyCy71TCJa_xLJQbCCdZu4dtYMNh8Nav7zw"
 			 version="3.exp" altendorf-trails="{{altendorfTrails}}"
-			 plan-coordinates="{{planCoordinates}}" alignment="{{alignment}}">
+			 plan-coordinates="{{planCoordinates}}" alignment="{{alignment}}"
+			 terrain-geo-coords="{{terrainGeoCoords}}" terrain-profile="{{terrainProfile}}">
 	</google-maps-api>
 	<paper-icon-button icon="check-box" id="rm_overlay" on-tap="removeOverlay"
 			   altendorf-trails="{{altendorfTrails}}">
@@ -119,17 +122,14 @@
 		},
 		terrainGeoCoords: {
 		    type: Array,
-		    value: [
-			{lat: 47.19056, lng: 8.82532, z: 450.0},
-			{lat: 47.18997, lng: 8.82302, z: 450.0},
-			{lat: 47.18994, lng: 8.82180, z: 450.0},
-			{lat: 47.18896, lng: 8.81960, z: 450.0}
-		    ],
+		    value: [],
+		    notify: true,		    
 		    observer: 'observeGeoCoords',
 		},
 		terrainProfile: {		
 		    type: Array,
 		    value: [],
+		    notify: true,				 
 		    observer: 'observeProfile',				 
 		},
 	    }
@@ -269,7 +269,7 @@
 	       //   but this.planCoordinates are not updated and input coordinates do not update
 	       // with following: this.planCoordinates are updated and input coordinates update
 //	       this.planCoordinates = planCoordinatesGlbl;  //testing
-	       this.planCoordinates = terrainGeoCoords;  //testing (null - asynchronous callback not complete)
+	       this.planCoordinates = terrainGeoCoords;  //testing - null - asynchronous callback not complete!!!
 	       //this.alignment.setMap(map);	           //testing: setMap is not required for update
 	       console.log('alignmentChanged completed');  	       
 	   };	   
