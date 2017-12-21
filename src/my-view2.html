@@ -19,25 +19,17 @@
     </style>
 
     <div class="card">
-	<h1>plotly charting testing</h1>
+	<h3>Profile - Test Project</h3>
 	<div id="profile">
 	    <my-plot layout="{{layout2}}" data="{{data2}}"
 		     terrain-geo-coords="{{terrainGeoCoords}}" terrain-profile="{{terrainProfile}}">
 	    </my-plot>
-	    <!--test data binding to array item (index selects trace), works-->
-	    <!-- <div>[[arrayItem(data2.*, 1, 'y')]]</div>  
-	    <!-- <template is="dom-repeat" items="{{arrayItem(data2.*, 1, 'x')}}" data="{{data2}}">
-		x: <input type="number" style="width:15mm" value="{{item::input}}">
-	    </template><br> -->
 	    <template is="dom-repeat" items="{{arrayItem(data2.*, 1, 'y')}}" data="{{data2}}">
 		y: <input type="number" style="width:15mm" value="{{item::input}}">
 		<!-- paper-input works but style needs considerable tuning -->
 		<!-- <paper-input type="number" label="y" max=4 style="width:10mm"
 		                        value="{{item}}" on-value-changed="onInput"></paper-input> -->
 	    </template>alignment
-	    <!-- test layout input, works -->
-            <!-- <input value="{{layout2.title::input}}" layout="{{layout2}}">  <!--non-Polymer component--> 
-	    <!-- <paper-input label="test" value="{{layout2.title}}" layout="{{layout2}}"></paper-input> -->
 	</div>
 
 	<div id="results">
@@ -48,14 +40,6 @@
 	    <div><paper-icon-button icon="check-box" on-tap="recomputeRockcover"
 			      terrain-geo-coords="{{terrainGeoCoords}}" terrain-profile="{{terrainProfile}}">
 	    </paper-icon-button>calculate</div>
-	</div>
-
-	<div>
-	    <!-- test providing plotly data as attributes, works -->
-	    <!-- <my-plot
-		layout='{"title": "just more testing", "height": 300, "width":800}'
-		data='[{"x": [1, 2, 3], "y": [2, 15, 30]}]',
-	    </my-plot> -->
 	</div>
     </div>
   </template>
@@ -101,10 +85,12 @@
 			showlegend: true
 		    }
 		},
-		trace3: {
+		trace3: {  //terrain along alignment
 		    value: {
-			x: chainage,
-			y: terrainElev,
+			//x: chainageGlbl,
+			//y: terrainElevGlbl,
+			x: [],  // ok
+			y: [],  // ok
 			name: 'terrain',
 			type: 'scatter',
 			mode: 'lines',
@@ -113,40 +99,45 @@
 			fillcolor:'burlywood',			
 		    },
 		    type: Object,
+		    observer: 'observeTrace3', //does not observe sub-properties ???
 		    notify: true		    
 		},
-		trace4: {
+		trace4: {  //alignment
 		    value: {
-			x: chainage,			
-			y: alignmentElev,
+			//x: chainageGlbl,			
+			y: alignmentElevGlbl,
+			x: [],  // ok
+			//y: [],  // no traces diplsayed, because alignmentElev not available
+			          //  need to add to Glbl var's and Polymer properties in my-app
 			name: 'alignment',
 			type: 'scatter',
 			mode: 'lines+markers',
 			line: {color: 'red'}
 		    },
 		    type: Object,
-		    //observer: 'recomputeRockcover',  //does not observe sub-properties	    
-		    notify: true		    
+		    observer: 'observeTrace4', //does not observe sub-properties ???    
+		    notify: true,
 		},
-		trace6: {
-		    computed: 'computeRockcover(trace3,trace4)',  
+		trace6: {  //rockcover
+		    computed: 'computeRockcover(trace3,trace4)',  //calls loadCoord() first to update data
 		    type: Object,
 		    notify: true,
 		    //observer:  //add ???
 		},
-		data: {                                   //results
-		    computed: 'computeResults(trace6)',
+		data: {  //results
+		    computed: 'computeResults(trace6)',  //calls loadCoord() first to update data
 		    type: Array,
 		    notify: true
 		},
-		data2: {                                  //profile
-		    computed: 'computeProfile(trace3,trace4)',
+		data2: {  //profile
+		    computed: 'computeProfile(trace3,trace4)',  //calls loadCoord() first to update data
 		    type: Array,
 		    notify: true
 		},
 		terrainGeoCoords: {
 		    type: Array,
 		    notify: true,
+		    //observer: 'observeTerrainGeoCoords(terrainGeoCoords)',
 		},
 		terrainProfile: {
 		    type: Array,
@@ -157,56 +148,69 @@
 
 	static get observers() {
 	     return [
-		 'recomputeRockcover(trace4.y)',  //observers for sub-properties, array changes not observed
+		 'observeTrace4(trace4.y)',  //observers for sub-properties, array changes not observed ???
+		 'recomputeRockcover(trace4.y)',  //observers for sub-properties, array changes not observed ???
+		 'observeTerrainGeoCoords(terrainGeoCoords)',  //testing - seems property observer ok
 	     ]
 	 }
 	
-//       constructor() {  //this.loadCoord() -> this.terrainGeoCoords etc. undefined
-////	connectedCallback() {  //this.loadCoord() -> this.terrainGeoCoords etc. undefined
-//	   super();
-////	   console.log('from connectedCallbackconstructor');
-////	   this.loadCoord();                       //update button doe not call ??? CHECK AGAIN
-////	}
+	connectedCallback() {
+	    super.connectedCallback();
+	    console.log('from MyView2 connectedCallback');
+	    //this.loadCoord();  //seems to be only called once
+	}
+
+	constructor() {
+	    super();
+	    console.log('from MyView2 constructor');
+	    //this.loadCoord();  //this.terrainGeoCoords, etc. undefined
+	}
 
 	ready() {
 	    super.ready();
-	    console.log('from ready');
-	    //console.log(this.data2);
-	    //console.log(this.data2[1].y[1]);
-	    console.log('ready: this.trace3 ', this.trace3);
-	    console.log('ready: this.trace4 ', this.trace4);	    	    	    
-	    this.loadCoord();                       //is this the rigth life cycle callback for loadCoord ??
+	    console.log('from MyView2 ready');
+//	    //console.log(this.data2);
+//	    //console.log(this.data2[1].y[1]);
+	    //console.log('ready: this.trace3 ', this.trace3);
+	    //console.log('ready: this.trace4 ', this.trace4);	    	    	    
+	    this.loadCoord();  //only called once, not right (as only) life cycle callback for loadCoord!!!
 	}
 
-	loadCoord() {
-	    console.log('from loadCoord');
-	    console.log('loadCoord: this.terrainGeoCoords ', this.terrainGeoCoords);  //ok, updated
-	    console.log('loadCoord: this.terrainProfile ', this.terrainProfile);  //ok, updated
-	    console.log('loadCoord: this.trace3 ', this.trace3);
-	    console.log('loadCoord: this.trace4 ', this.trace4);	    
+	loadCoord() {  //calculate chainage from terrainGeoCoords, write chainage and elev's into traces
+////	loadCoord(terrainGeoCoords) {
+	    console.log('loadCoord');
+	    console.log('loadCoord: this ',this);  //my-view2
+////	    console.log('loadCord begin: terrainGeoCoords ', JSON.stringify(terrainGeoCoords));
+	    console.log('loadCoord begin: this.terrainGeoCoords ', JSON.stringify(this.terrainGeoCoords));  //ok
+//	    console.log('loadCoord: this.terrainProfile ', this.terrainProfile);  //ok, updated
+	    console.log('loadCoord begin: trace3 ', JSON.stringify(this.trace3));
+	    console.log('loadCoord begin: trace4 ', JSON.stringify(this.trace4));	    
 	    var station = [0.0];
 	    this.trace3.y = [];  //reinitialize terrain profile elevations
 	    // calculate stationing along alignment
+	    console.log('loadCoord: this.terrainGeoCoords ', JSON.stringify(this.terrainGeoCoords));
 	    for (var i = 1; i <this.terrainGeoCoords.length; i++) {	    
 		var dist = getDistanceFromLatLonInKm(
 		    this.terrainGeoCoords[i-1].lat, this.terrainGeoCoords[i-1].lng,
 		    this.terrainGeoCoords[i].lat, this.terrainGeoCoords[i].lng) *1000;  //meters;
+		console.log('dist ', dist);  //testing, testing
 		station.push(station[i-1] + dist);
+		if (alignmentElevGlbl[i] == undefined) {alignmentElevGlbl[i] = null};  //add placeholders
 	    }
 	    // get elevation along chainage
-	    for (var i = 0; i <this.terrainGeoCoords.length; i++) {	    	    
+	    for (var i = 0; i <this.terrainGeoCoords.length; i++) {
 		this.trace3.y.push(this.terrainGeoCoords[i].z);  //terrain profile elevations
 	    }
-	    console.log('station ',station);
-	    chainage = station;                //is set after plot data is defined (e.g. after ready), fix!!!
-	    console.log('loadCoord: this.trace3.x ', this.trace3.x);
+	    console.log('loadCoord: station', JSON.stringify(station));
+	    chainageGlbl = station;                //is set after plot data is defined (e.g. after ready), fix!!!
+	    console.log('loadCoord: this.trace3.y ', JSON.stringify(this.trace3.y));
 	    // following two statement seem not necessary, station already assigned in property!!!
 	    this.trace4.x = station;  //alignment stationion, elevation not changed by alignment change on map
 	    this.trace3.x = station;  //terrain profile stationing
-	    console.log('loadCoord: this.terrainGeoCoords ',this.terrainGeoCoords);
-	    console.log('loadCoord: this.trace3 ', this.trace3);
-	    console.log('loadCoord: this.trace4 ', this.trace4);	    
-	    console.log('loadCoord: this.trace3.y ', this.trace3.y);	    
+//	    console.log('loadCoord: this.terrainGeoCoords ',this.terrainGeoCoords);
+	    console.log('loadCoord trace3 ', JSON.stringify(this.trace3));
+	    console.log('loadCoord trace4 ', JSON.stringify(this.trace4));	    
+//	    console.log('loadCoord: this.trace3.y ', this.trace3.y);	    
 	    
 	    function getDistanceFromLatLonInKm(lat1,lon1,lat2,lon2) {
 		var R = 6371; // Radius of the earth in km
@@ -225,7 +229,6 @@
 	    function deg2rad(deg) {
 		return deg * (Math.PI/180)
 	    }
-	   
        }
 
 	// change is change record for the array change,
@@ -237,55 +240,91 @@
 
 	computeProfile(trace1, trace2) {                  //called to compute data2
 	    console.log('computeProfile');
+	    this.loadCoord();  //updata data before returning
 	    return [trace1, trace2];
 	}
 
 	computeResults(trace1) {                          //called to compute data
 	    console.log('computeResults');
+	    this.loadCoord();  //updata data before returning
 	    return [trace1];
 	}
 
 	computeRockcover(terrain, alignment) {            //called to compute trace6 (rockcover)
+	    console.log('computeRockcover');
+	    //console.log('computeRockcover: terrain=trace3 ', terrain);  //testing
+	    //console.log('computeRockcover: alignment=trace4 ', alignment);  //testing
+	    this.loadCoord();  //updata data before computing rockcover (needed, order of properties arbitrary)
 	    var rockcover = {
-		x: chainage,
-		y: terrain.y.map((a, i) => a - alignment.y[i]), //rockcover
+		x: chainageGlbl,
+		y: terrain.y.map((a, i) => a - alignment.y[i]), //rockcover = trace3.y - trace4.y
 		name: 'rockcover',
 		type: 'scatter',
 		mode: 'lines+markers',
 		line: {color: 'blue'}
 	    };
-	    console.log('compute Rockcover');
+	    console.log('computeRockcover: rockcover.y '+rockcover.y);	    
 	    return rockcover;
 	}
 	
-	recomputeRockcover() {                            //called by button on-tap to recalculate rock cover
+	recomputeRockcover() {  //called by button on-tap to recalculate rock cover
+	                        //fires as observer to trace trace4.y
 	    console.log('recomputeRockcover');
 	    var rockcover=this.trace3.y.map((a, i) => a - this.trace4.y[i]);  //[trace3]-[trace4]
-	    console.log('rockcover '+rockcover);
+	    console.log('trace3.y', this.trace3.y);
+	    console.log('trace4.y', this.trace4.y);
+	    console.log('recomputeRockcover: rockcover '+rockcover);
+	    this.loadCoord();  //testing, testing, testing - does work (brute force approach); why needed ???
 	    var len=this.trace6.y.length;
 	    for (var i = 0, len = this.trace6.y.length; i < len; ++i) {  //replace y with rockcover
 	    	        this.shift('trace6.y');  //removes last array item
 	    	        this.push('trace6.y',rockcover[i])  //add item i from rcockcover to front of array
 	                this.shift('trace6.x');
-	                this.push('trace6.x',chainage[i])};
+	                this.push('trace6.x',chainageGlbl[i])};
 	    //console.log('recomputeRockcover: this.trace6 ', this.trace6);
 	    //console.log('recomputeRockcover: this.data ', this.data);
 	    return this.data;
 	}
+
+	observeTerrainGeoCoords(terrainGeoCoords) {
+	//fired when alignment changed, in map, causes trace3, trace4 to be empty!!!
+	    console.log('observeTerrainGeoCoords');
+	    console.log('observeTerrainGeoCoords: terrainGeoCoords ', JSON.stringify(terrainGeoCoords));
+	    //terrainGeoCoords is null, although it is a argument in function call ???
+	    console.log('observeTerrainGeoCoords: this.terrainGeoCoords ', JSON.stringify(this.terrainGeoCoords));
+	    console.log('observeTerrainGeoCoords: this.terrainGeoCoords ', this.terrainGeoCoords);
+	    console.log('observeTerrainGeoCoords: trace3 ', JSON.stringify(this.trace3, null, '\t'));
+	    console.log('observeTerrainGeoCoords: trace4 ', JSON.stringify(this.trace4, null, '\t'));	    
+	    //this.loadCoord.bind(this)();
+	    this.loadCoord();  //testing, results in empty traces ???
+	}
+
+	observeTrace3() {
+	    console.log('observeTrace3');
+	}
+	observeTrace4() {
+	    console.log('observeTrace4');
+	}
 	
-	onInput() {                                       //called by valued-changed in paper-input
-	    console.log('onInput');                       //on-value-changed works, testing notifyPath
-	    this.notifyPath('this.data2[1].y');           //n.g. due to non-observable changes in array  
-	    //Plotly.newPlot(this.$.profile,this.data2,this.layout2);  //produces a new plot
-	                                                               //and Plotly.update use diff data structure
+	//onInput() {  //testing                            //called by valued-changed in paper-input
+	//    console.log('onInput');                       //on-value-changed works, testing notifyPath
+	//    this.notifyPath('this.data2[1].y');           //n.g. due to non-observable changes in array  
+	//}
+
+	static _loadCoord() {  //testing from console
+	    console.log('_loadMap');
+	    //MyView2.loadCoord();  //Uncaught TypeError: MyView2.loadCoord is not a function
+	    //MyView2.loadCoord.call(MyView2); //Uncaught TypeError: Cannot read property 'call' of undefined
+	    //this.loadCoord();  //Uncaught TypeError: this.loadCoord is not a function
+	    //loadCoord();  //Uncaught ReferenceError: loadCoord is not defined
 	}
     }
 
    //alignment input data
-   var chainage=[100, 1100, 2000, 3000];
-//   var chainage = [];
-   var terrainElev=[250, 300, 250, 270];
-   var alignmentElev=[175,170, 165, 160];
+   var chainageGlbl=[100, 1100, 2000, 3000];
+//   var chainageGlbl = [];
+   var terrainElevGlbl=[250, 300, 250, 270];
+   var alignmentElevGlbl=[175,170, 165, 160];
 
    window.customElements.define(MyView2.is, MyView2);
   </script>

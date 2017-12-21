@@ -36,7 +36,7 @@
 		 layout: {
 		     type: Object,
 		     notify: true,
-		     //observer: '_layoutChanged'  //does not work for sub-propeties
+		     observer: '_layoutChanged'  //does not work for sub-propeties
 		 },
 	     }
 	 }
@@ -48,6 +48,15 @@
 	     ]
 	 }
 	 
+	 ready() {
+	     console.log('from MyPlot ready');
+	     super.ready();
+	     //console.log('MyPlot ready: this.data ', this.data);
+//  	       Plotly.newPlot(this.$.plot, this.data, this.layout);  // testing
+ 	                                                             //_dataChanged displays
+	                                                             //this.data points to data in Polymer.Element
+	 }                                                           //data points to global data
+	 
 	 onClick() {
 	     console.log('onClick');
 	     console.log('onClick: this.data ', this.data); 
@@ -56,19 +65,14 @@
 
 	 _layoutChanged(value) {
 	     console.log('_layoutChanged');	     
-	     Plotly.newPlot(this.$.plot, this.data, this.layout);
+//	     Plotly.newPlot(this.$.plot, this.data, this.layout);
 	 }
 
 	 _dataChanged(changeRecord) {
 	     console.log('_dataChanged');
+	     console.log('_dataChanged: this.data ', this.data);
 	     Plotly.newPlot(this.$.plot, this.data, this.layout);  //Plotly.update requires diff array structure
 	 }
-
-	 ready() {
-	     console.log('from ready');
-	     super.ready();
-	     Plotly.newPlot(this.$.plot, this.data, this.layout);  //this.data points to data in Polymer.Element
-	 }                                                         //data points to global data
      }
 
      customElements.define(MyPlot.is, MyPlot);

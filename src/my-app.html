@@ -137,11 +137,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           rootPath: String,
 	    
 	  // DSS variables  
-	  planCoordinates: {
-	     type: Array,
-	     value: planCoordinatesGlbl,                                              //testing
-	     notify: true,
-	  },
 	  terrainGeoCoords: {
 	     type: Array,
 	     value: terrainGeoCoordsGlbl,                                             //testing
@@ -151,7 +146,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 	     type: Array,
 	     value: terrainProfileGlbl,                                               //testing
 	     notify: true,
-	  },	    
+	  },
+	  //alignment  //add  
         };
       }
 
@@ -180,8 +176,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             null,
             this._showPage404.bind(this),
             true);
-	console.log('_pageChanged: this.planCoordinates ', this.planCoordinates);  //testing
-        console.log('_pageChanged: this.terrainGeoCoords ', this.terrainGeoCoords);  //testing
+        console.log('<iron-pages>.selected', this.page);
+//	if (this.page == 'view2') {MyView2.loadCoord()};  //not dfined 
+        console.log('_pageChanged: this.terrainGeoCoords ', JSON.stringify(this.terrainGeoCoords));  //testing
 	console.log('_pageChanged: this.terrainProfile ', this.terrainProfile);  //testing	  
       }
 
@@ -190,12 +187,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     }
 
-   var planCoordinatesGlbl = [
-       {lat: 47.19056, lng: 8.82532, z: 450.0},
-       {lat: 47.18997, lng: 8.82302, z: 450.0},
-       {lat: 47.18994, lng: 8.82180, z: 450.0},
-       {lat: 47.18896, lng: 8.81960, z: 450.0}
-   ];   
+   
+   // DSS data input (these should be in a dss namespace)
    var terrainProfileGlbl = [
        {lat: 47.19056, lng: 8.82532, z: 450.0},
        {lat: 47.18997, lng: 8.82302, z: 450.0},
@@ -208,7 +201,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
        {lat: 47.18994, lng: 8.82180, z: 450.0},
        {lat: 47.18896, lng: 8.81960, z: 450.0}
    ];
-			      
+   //var alignmentElevGlbl  //add
+   
     window.customElements.define(MyApp.is, MyApp);
   </script>
 </dom-module>
