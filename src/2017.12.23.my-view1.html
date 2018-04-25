@@ -1,5 +1,4 @@
 <!-- my-view1.html  google-maps-api for hydropower decision support system use -->
-<!--  testing version with extensive console logging  -->
 
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
 <link rel="import" href="shared-styles.html">
@@ -61,9 +60,9 @@
 
     <h3>Map View - Test Project</h3>
     <button on-click="updateAlignment" id="update_align">update Alignment</button>
-    <!--                                                       ToDo JK: replace input with e.g. paper-input -->
-    <!--                                                       ToDo JK: add on-tap handler?? -->
-    <!--                                                       ToDo JK: on-tap also writes data to global var?-->
+    <!--                                                         ToDo JK: replace input with e.g. paper-input -->
+    <!--                                                         ToDo JK: add on-tap handler -->
+    <!--                                                         ToDo JK: on-tap also data writes to global var-->
     <div><template is="dom-repeat" items="{{terrainGeoCoords}}"
 		   terrain-geo-coords="{{terrainGeoCoords}}" terrain-profile="{{terrainProfile}}">
 	<input id="lat_i" type="number" style="width:18mm" value="{{item.lat::input}}">
@@ -77,12 +76,12 @@
 
     <div>
 	<google-maps-api id="map" on-api-load="mapLoaded" api-key="AIzaSyCy71TCJa_xLJQbCCdZu4dtYMNh8Nav7zw"
-			 version="3.exp" project-layout="{{projectLayout}}"
+			 version="3.exp" altendorf-trails="{{altendorfTrails}}"
 			 alignment="{{alignment}}"
 			 terrain-geo-coords="{{terrainGeoCoords}}" terrain-profile="{{terrainProfile}}">
 	</google-maps-api>
 	<paper-icon-button icon="check-box" id="rm_overlay" on-tap="removeOverlay"
-			   project-layout="{{projectLayout}}">
+			   altendorf-trails="{{altendorfTrails}}">
 	</paper-icon-button>rmOvly
     </div>
     </template>
@@ -93,7 +92,7 @@
 
        static get properties() {
 	    return {
-		projectLayout: {
+		altendorfTrails: {
 		    type: Object,
 		    value: null,
 		    notify: true,
@@ -102,7 +101,7 @@
 		    type: Object,
 		    value: null,
 		},
-		//alignment2: {  //testing adding second alignment
+		//alignment2: {  //testing
 		//    type: Object,
 		//    value: null,
 		//},
@@ -110,7 +109,7 @@
 		    type: Array,
 		    value: [],
 		    notify: true,		    
-		    //observer: 'observeGeoCoords',  //moved to static get observers
+//		    observer: 'observeGeoCoords',
 		},
 		terrainProfile: {		
 		    type: Array,
@@ -129,12 +128,12 @@
 	
        constructor() {
 	   super();
-	   console.log('starting/completed MyView1 constructor');
+	   console.log('from constructor');
        }
 
        ready() {
 	   super.ready();
-	   console.log('starting/completed MyView1 ready');
+	   console.log('from MyView1 ready');
        }
 	   
        mapLoaded() {
@@ -142,8 +141,7 @@
 
 	   // display map
 	   var mapsAPI = this.shadowRoot.querySelector('google-maps-api');
-	   var mapCenter = {lat: 15.11, lng: 107.12};  //a defined Project center location
-	   //var mapCenter = {lat: 47.1899, lng: 8.8219};  //testing in Altendorf	   
+	   var mapCenter = {lat: 47.1899, lng: 8.8219};  //a defined Project center location
 	   var map = new google.maps.Map(mapsAPI, {
 	       center: mapCenter,
 	       zoom: 13,
@@ -177,13 +175,13 @@
 	   this.alignment.setMap(map);
 
 	   // listener for alignment (polyline) changes
-	   //console.log('mapLoaded: this.alignment ', this.alignment);
+	   //console.log('mapLoaded: this.alignment ', this.alignment);  //._Lg
 	   google.maps.event.addListener(this.alignment.getPath(), "dragend", alignmentChanged.bind(this));
 	   google.maps.event.addListener(this.alignment.getPath(), "insert_at", alignmentChanged.bind(this));
 	   google.maps.event.addListener(this.alignment.getPath(), "remove_at", alignmentChanged.bind(this));
 	   google.maps.event.addListener(this.alignment.getPath(), "set_at", alignmentChanged.bind(this));
 	   
-	   //this.alignment2 = new google.maps.Polyline({  //testing adding second alignment - works
+	   //this.alignment2 = new google.maps.Polyline({  //testing - works
 	   //                                              //better to make an alignment prototype and child???
 	   //    path: [mapCenter, {lat: 47.1999, lng: 8.8219}],                      
 	   //    geodesic: true,
@@ -196,17 +194,7 @@
 	   //this.alignment2.setMap(map);
 	   
 	   function  alignmentChanged() {  //alignment change Listener
-	   // what works, what does not work                                                         ToDo: JK
-	   //    API calls to elevator.getElevationForLocations and elevator.getElevationAlongPath
-	   //    are completed _after_ alignmentChanged() is completed
-	   //    -> async behavior causing race condition, because async not yet handled
-           //    --> alignmentChanged() fires observeGeoCoords (which only logs at present)
-           //    --> alignmentChanged() fires observeProfile (which only logs at present)
-	   //    first page change to view2 works fine (ploltly plot is updated automatically)
-	   //    second page change to view2 (after alignment changed) has null data in plotly plot
-	   //    -> temporary fix: in view 2 calculate -> update profile -> calculate -> update plot
-	   // works fine if API elevator call to get elevations is commented out
-	       console.log('starting alignmentChanged');
+	       console.log('alignmentChanged');
 	       //console.log('alignmentChanged: this', this);  //my-view1
 	       var path = this.alignment.getPath();
 	       var coordinates = [];
@@ -214,7 +202,7 @@
 	       var terrainGeoCoords = this.terrainGeoCoords;  //lat:, lng:, z: are surface trace of alignment
 	       var terrainProfile = this.terrainProfile;      //terrain elevations along alignment
 
-	       // get lat/lng coordinates from alignment path
+	       // get lat/lng coordinates from path
 	       for (var i = 0; i < path.getLength(); i++) {
 		   coordinates.push({
 		       lat: path.getAt(i).lat(),
@@ -228,9 +216,8 @@
 	       elevator.getElevationForLocations({
 		   'locations': coordinates
 	       }, function(results, status) {
-		   console.log('starting elevator.getElevationForLocations')
-		   self.terrainGeoCoords = [];  //self = this (used to refrence this insida a function) 
-		   console.log('getElevationForLocations: status ', status);
+		   self.terrainGeoCoords = [];
+		   console.log('getElevationForLocations: status ', status);  //display error  	    //ToDo-P3 JK
 		   //console.log('elevator: location elevation results ', results);  //testing
 		   for (var i = 0; i < results.length; i++) {
 		       self.terrainGeoCoords.push({
@@ -239,7 +226,6 @@
 			   z: results[i].elevation
 		       });
 		   };
-		   console.log('completed elevator.getElevationForLocations')		       
 	       });
 		   
 	       // get elevations along alignment path
@@ -247,56 +233,35 @@
 		   'path': coordinates,
 		   'samples': 100  //API doc: must be a value between 2 and 512 inclusive
 	       }, function(elevations, status) {
-		   console.log('starting elevator.getElevationAlongPath')		   
-		   console.log('getElevationAlongPath: status ', status);
+		   console.log('getElevationAlongPath: status ', status);  	      //ToDo-P3 JK -display error
 		   //console.log('elevator: this ', this);  //Window (with or without .bind(this)
 		   //console.log('getElevationAlongPath: self ', self);  //my-view1
-		   self.terrainProfile = elevations;  //self = this (used to refrence this insida a function) 
-		   console.log('completed elevator.getElevationAlongPath')		   		   
+		   self.terrainProfile = elevations;
 	       });
 	       
-	       //this.alignment.setMap(map);	         //testing: setMap is not required for align update
-	       console.log('completed alignmentChanged');  	       
+	       //this.alignment.setMap(map);	         //testing: setMap is not required for update
+	       console.log('alignmentChanged completed');  	       
 	   };	   
 
-	   alignmentChanged.bind(this)();  // called to get elev's along align initially & after lat/lng input
+	   alignmentChanged.bind(this)();  // needed to get elev's along align initially & after lat/lng input
 	                                   //testing, 1) get elevations along alginment for lat/lnt input, works
                                            //         2) get elevations along alignment initially, works
 	   
-	   // add project Layout as map overlay
 	   var imageBounds = {
-	       //north: 47.19658,  //testing in Altendorf
-	       //south: 47.15026,
-	       //east: 8.8544,
-	       //west: 8.7813
-	       north: 15.125631,
-	       south: 15.101715,
-	       east: 107.134667,
-	       west: 107.104881
+	       north: 47.19658,
+	       south: 47.15026,
+	       east: 8.8544,
+	       west: 8.7813
 	   };
-	   this.projectLayout = new google.maps.GroundOverlay(
-	       //'../data/AltendorfTrails.png',  //testing in Altendorf
-	       //'../src/AltendorfTrails.png',  //temporarily for firebase deploy
-	       '../src/NA-BD-060-001-Edited.png',  //temporarily for firebase deploy	       
+	   this.altendorfTrails = new google.maps.GroundOverlay(
+	       //'../data/AltendorfTrails.png',
+	       '../src/AltendorfTrails.png',  //temporarily for firebase deply
 	       imageBounds,{
 		   opacity:0.5}
 	   );
-	   //console.log('projectLayout',this.projectLayout);
-	   this.projectLayout.setMap(map);  //required if map not set
+	   //console.log('altendorfTrails',this.altendorfTrails);
+	   this.altendorfTrails.setMap(map);  //required if map: not set
 
-	   // add hillslope as map overlay
-	   var imageBounds = {
-	       north: 15.131919,
-	       south: 15.099991,
-	       east: 107.135300,
-	       west: 107.103063
-	   };
-	   this.hillslope = new google.maps.GroundOverlay(
-	       '../src/NamAngTopogSlope.png',  //temporarily for firebase deploy	       
-	       imageBounds,{
-		   opacity:0.35}
-	   );
-	   this.hillslope.setMap(map);
 	   
 	   // Try HTML5 geolocation (quickly hacked from google-maps-api example for js,
 	   // but it works)
@@ -330,8 +295,6 @@
 	   //geoLocate()  //do not geolocate unless requested, as geolocate not suitable for office use
 	   
            // add Listner to (re)gelocate
-	   //   getCurrentPosition() does not work on insecure origins
-	   //   to use, switch your application to a secure origin, such as HTTPS
 	   map.addListener('click', function() {
 	       console.log('map.addListener: click');  //works on map, does not work on overlay
 	       geoLocate();		   
@@ -340,35 +303,34 @@
        
        removeOverlay(e) {  //quick testing, works with on-api-load instead of mapsAPI EventListener
 	   console.log('removing Overlay');
-	   //console.log('projectLayout',this.projectLayout);
-	   //this.projectLayout.setMap(null);  //use to remove Overlay
-	   this.hillslope.setMap(null); 	   
+	   //console.log('altendorfTrails',this.altendorfTrails);
+	   this.altendorfTrails.setMap(null);  //use to remove Overlay
        };
 
        updateAlignment() {
-          	         //zoom level not preserved                                                   //ToDo: JK
-	   console.log('starting updateAlignment');
+	   	    //rename this to updateAlignment !!!
+          	    //zoom level not preserved                                                      //ToDo: JK
+	   console.log('updateAlignment');
 	   //console.log('updateAlignment: this ', this); //my-view1 
 	   //console.log('updateAlignment: this.terrainGeoCoords ', this.terrainGeoCoords);  //updated	   
-	   // handle input to convert to number
+	   // handling input to convert to number
 	   for (var i = 0; i < this.terrainGeoCoords.length; i++) {
 	       this.terrainGeoCoords[i].lat=Number(this.terrainGeoCoords[i].lat);
 	       this.terrainGeoCoords[i].lng=Number(this.terrainGeoCoords[i].lng);	       
 	   };
-	   this.mapLoaded();  //mapLoaded() also calls alignmentChanged() to get terrain elev along alignment
-	   // see comments about async problem in alignmentChanged()
+	   this.mapLoaded();  //mapLoaded also calls alignmentChanged() to get terrain elevations along alignment
 	   //this.alignment.setMap(map);  //map is not defined, need to make map a polymer property
 	                                  // alignment.SetMap might be preferred to this.mapLoaded
 	   //console.log('updateAlignment: this.alignment', this.alignment);  //testing
-	   console.log('comleted updateAlignment');
-	   //console.log('window.MyView2 ', MyView2);  //not defined until view2 displayed
+	   console.log('updateAlignment completed');
+////	   console.log('window.MyView2 ', MyView2);  //not defined until view2 displayed
 	   ////	   MyView2.loadCoord();  //testing
        }
 
-       //observeGeoCoords() {  //fired by alignmentChanged
+//       observeGeoCoords() {  //fired by alignmentChanged
        observeGeoCoords(terrainGeoCoords) {  //fired by alignmentChanged       
 	   console.log('observeGeoCoords');
-	   // JSON.stringify forces evaluation of parameter (otherwise parameter evaluated at interrogation)
+	   //console.log('observeGeoCoords: terrainGeoCoords ', JSON.stringify(terrainGeoCoords));  //not defined
 	   console.log('observeGeoCoords: this.terrainGeoCoords ', JSON.stringify(this.terrainGeoCoords));
 	   console.log('observeGeoCoords: this.terrainGeoCoords ', this.terrainGeoCoords);
 	   console.log('observeGeoCoords: terrainGeoCoords ', JSON.stringify(terrainGeoCoords));

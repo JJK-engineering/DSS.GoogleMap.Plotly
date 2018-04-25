@@ -71,7 +71,7 @@
 		    type: Object,
 		    notify: true,
 		    value: {
-			title: 'Overburden',
+			title: 'Results',
 			height: 200,
 			width: 800,
 			autosize: true,
@@ -157,32 +157,30 @@
 	 }
 	
 	connectedCallback() {
-	    console.log('started MyView2 connectedCallback');	    
 	    super.connectedCallback();
-	    console.log('completed MyView2 connectedCallback');
+	    console.log('from MyView2 connectedCallback');
 	    //this.loadCoord();  //seems to be only called once
 	}
 
 	constructor() {
 	    super();
-	    console.log('started/completed MyView2 constructor');
+	    console.log('from MyView2 constructor');
 	    //this.loadCoord();  //this.terrainGeoCoords, etc. undefined
 	}
 
 	ready() {
-	    console.log('started MyView2 ready');
 	    super.ready();
+	    console.log('from MyView2 ready');
 //	    //console.log(this.data2);
 //	    //console.log(this.data2[1].y[1]);
 	    //console.log('ready: this.trace3 ', this.trace3);
 	    //console.log('ready: this.trace4 ', this.trace4);	    	    	    
-	    this.loadCoord();  //only called once, is not right (as only) life cycle callback for loadCoord!!!
-	    console.log('completed MyView2 ready');
+	    this.loadCoord();  //only called once, not right (as only) life cycle callback for loadCoord!!!
 	}
 
 	loadCoord() {  //calculate chainage from terrainGeoCoords, write chainage and elev's into traces
 ////	loadCoord(terrainGeoCoords) {
-	    console.log('starting loadCoord');
+	    console.log('loadCoord');
 	    console.log('loadCoord: this ',this);  //my-view2
 ////	    console.log('loadCord begin: terrainGeoCoords ', JSON.stringify(terrainGeoCoords));
 	    console.log('loadCoord begin: this.terrainGeoCoords ', JSON.stringify(this.terrainGeoCoords));  //ok
@@ -233,9 +231,7 @@
 	    function deg2rad(deg) {
 		return deg * (Math.PI/180)
 	    }
-
-	    console.log('completed loadCoord');	    
-        }
+       }
 
 	// change is change record for the array change,
 	// change.base is the array specified in the binding
@@ -245,7 +241,7 @@
 	    }
 
 	computeProfile(terrainGeoCoords, trace1, trace2) {                  //called to compute data2
-	    console.log('starting view2 computeProfile');
+	    console.log('computeProfile');
 //	    this.loadCoord();  //updata data before returning
 //	    setTimeout(function(){console.log('TIMEOUT');},3000);  //messy testing
 
@@ -280,8 +276,7 @@
 	    this.trace4.x = station;  //alignment stationion, elevation not changed by alignment change on map
 	    this.trace3.x = station;  //terrain profile stationing
 	    console.log('computeProfile trace3 ', JSON.stringify(this.trace3));
-	    console.log('computeProfile trace4 ', JSON.stringify(this.trace4));
-	    console.log('completed view2 computeProfile');	    
+	    console.log('computeProfile trace4 ', JSON.stringify(this.trace4));	    
 	    return [trace1, trace2];
 	    
 	    function getDistanceFromLatLonInKm(lat1,lon1,lat2,lon2) {
@@ -310,7 +305,7 @@
 	}
 
 	computeRockcover(terrain, alignment) {            //called to compute trace6 (rockcover)
-	    console.log('starting computeRockcover');
+	    console.log('computeRockcover');
 	    //console.log('computeRockcover: terrain=trace3 ', terrain);  //testing
 	    //console.log('computeRockcover: alignment=trace4 ', alignment);  //testing
 	    this.loadCoord();  //updata data before computing rockcover (needed, order of properties arbitrary)
@@ -323,16 +318,16 @@
 		mode: 'lines+markers',
 		line: {color: 'blue'}
 	    };
-	    console.log('completed computeRockcover: rockcover.y '+rockcover.y);	    
+	    console.log('computeRockcover: rockcover.y '+rockcover.y);	    
 	    return rockcover;
 	}
 	
 	recomputeRockcover() {  //called by button on-tap to recalculate rock cover
 	                        //fires as observer to trace trace4.y
-	    console.log('starting recomputeRockcover');
+	    console.log('recomputeRockcover');
 	    var rockcover=this.trace3.y.map((a, i) => a - this.trace4.y[i]);  //[trace3]-[trace4]
-	    console.log('this.trace3.y', this.trace3.y);
-	    console.log('this.trace4.y', this.trace4.y);
+	    console.log('trace3.y', this.trace3.y);
+	    console.log('trace4.y', this.trace4.y);
 	    console.log('recomputeRockcover: rockcover '+rockcover);
 	    this.loadCoord();  //testing, testing, testing - does work (brute force approach); why needed ???
 	    var len=this.trace6.y.length;
@@ -344,7 +339,6 @@
 	                this.push('trace6.x',chainageGlbl[i])};
 	    //console.log('recomputeRockcover: this.trace6 ', this.trace6);
 	    //console.log('recomputeRockcover: this.data ', this.data);
-	    console.log('completed recomputeRockcover');	    
 	    return this.data;
 	}
 
@@ -389,13 +383,10 @@
     }
 
    //alignment input data
-   //var chainageGlbl=[100, 1100, 2000, 3000]; //testing
-   var chainageGlbl=[0, 163.81, 2063.77, 2603.58, 3030.73]; //Nam Ang   
+   var chainageGlbl=[100, 1100, 2000, 3000];
 //   var chainageGlbl = [];
-   var alignmentElevGlbl=[625.850, 625.543, 504.226, 469.758, 464.220];  //Nam Ang
-   //var alignmentElevGlbl=[175,170, 165, 160]; //testing
-   var terrainElevGlbl=[0, 0, 0, 0, 0];
-   //var terrainElevGlbl=[250, 300, 250, 270]; //testing
+   var terrainElevGlbl=[250, 300, 250, 270];
+   var alignmentElevGlbl=[175,170, 165, 160];
 
    window.customElements.define(MyView2.is, MyView2);
   </script>

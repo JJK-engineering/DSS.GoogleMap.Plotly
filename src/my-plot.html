@@ -49,13 +49,14 @@
 	 }
 	 
 	 ready() {
-	     console.log('from MyPlot ready');
+	     console.log('started MyPlot ready');
 	     super.ready();
 	     //console.log('MyPlot ready: this.data ', this.data);
 //  	       Plotly.newPlot(this.$.plot, this.data, this.layout);  // testing
  	                                                             //_dataChanged displays
 	                                                             //this.data points to data in Polymer.Element
-	 }                                                           //data points to global data
+	     console.log('completed MyPlot ready');                    //data points to global data
+	 }                                       
 	 
 	 onClick() {
 	     console.log('onClick');
