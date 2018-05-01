@@ -1,15 +1,14 @@
-<!--
-@license
-Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
-This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
-The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
-The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
-Code distributed by Google as part of the polymer project is also
-subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
--->
+<!-- my-view3.html  Polymer Example of Results of Hydraulic Confinement-->
 
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
 <link rel="import" href="shared-styles.html">
+<link rel="import" href="../bower_components/plotly-plot/plotly-plot.html">  <!-- required -->
+<link rel="import" href="./my-plot.html">
 
 <dom-module id="my-view3">
   <template>
@@ -21,19 +20,92 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     </style>
 
-    <div class="card">
-      <div class="circle">3</div>
-      <h1>View Three</h1>
-      <p>Modus commodo minimum eum te, vero utinam assueverit per eu.</p>
-      <p>Ea duis bonorum nec, falli paulo aliquid ei eum.Has at minim mucius aliquam, est id tempor laoreet.Pro saepe pertinax ei, ad pri animal labores suscipiantur.</p>
     </div>
+    <div class="mt-20">
+	<paper-button raised on-tap="sendData">TEST</paper-button>
+    </div>
+
+    <div id="hydrconf">
+	<my-plot layout="{{layout}}" data="{{data}}"</my-plot>
+    </div>
+    
+   <iron-ajax
+	url="http://gis.jkaelin.com:8081/hydraulic_confinement"
+	id="postExample"
+	handle-as="json"
+	content-type="application/json"
+	method="POST"
+	params='{{postBody}}'
+	on-response="serverSuccessCb"
+	last-response="{{serverSuccessObj}}"
+	on-error="serverErrorCb"
+	last-error="{{serverErrorObj}}">
+	</iron-ajax> 
   </template>
 
   <script>
     class MyView3 extends Polymer.Element {
-      static get is() { return 'my-view3'; }
-    }
+	static get is() { return 'my-view3'; }
 
+	static get properties() {
+	    return {
+		postBody: {
+		    type: Object,
+		    computed: 'getPostBody()'
+		},
+		serverErrorObj: Object,
+		serverSuccessObj: Object,
+		ssoDisplay: {
+		    type: String,
+		    computed: 'getSso(serverSuccessObj)'
+		},
+
+		layout: {
+		    type: Object,
+		    notify: true,
+		    computed: 'getLayout(serverSuccessObj)'
+		},
+		data: {
+		    type: Object,
+		    notify: true,
+		    computed: 'getData(serverSuccessObj)'		    
+		},
+	    }
+	}
+
+	sendData(event) {
+	    this.shadowRoot.querySelector('iron-ajax').generateRequest();
+	}
+	getPostBody() {
+	    console.log('getPostBody');
+	    return {
+	    };
+	}
+	serverSuccessCb() {
+	    console.log('serverSuccesCb');
+	    console.log('serverSuccesObj: ',this.serverSuccessObj);
+	    console.log('testing');
+	    console.log('serverSuccesObj[0].data: ',this.serverSuccessObj[0].data);
+	    console.log('serverSuccesObj[0].layout: ',this.serverSuccessObj[0].layout);	    
+	    console.log('ssoDisplay: ',this.ssoDisplay); 
+	}
+	serverErrorCb() {
+	    console.log('serverErrorCb');
+	}
+	getSso(serverSuccessObj) {
+	    console.log(serverSuccessObj);
+	    return JSON.stringify(serverSuccessObj);
+	}
+	getLayout(serverSuccessObj) {
+	    console.log('getLayout');
+	    return this.serverSuccessObj[0].layout[0]
+	}
+	getData(serverSuccessObj) {
+	    console.log('getData');
+	    return this.serverSuccessObj[0].data[0]
+	}
+    }
+   
     window.customElements.define(MyView3.is, MyView3);
-  </script>
+  </script>    
 </dom-module>
