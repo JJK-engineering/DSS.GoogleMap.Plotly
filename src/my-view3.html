@@ -40,7 +40,7 @@
 	last-response="{{serverSuccessObj}}"
 	on-error="serverErrorCb"
 	last-error="{{serverErrorObj}}">
-	</iron-ajax> 
+   </iron-ajax> 
   </template>
 
   <script>
@@ -49,10 +49,6 @@
 
 	static get properties() {
 	    return {
-		postBody: {
-		    type: Object,
-		    computed: 'getPostBody()'
-		},
 		serverErrorObj: Object,
 		serverSuccessObj: Object,
 		ssoDisplay: {
@@ -70,15 +66,30 @@
 		    notify: true,
 		    computed: 'getData(serverSuccessObj)'		    
 		},
+		terrainGeoCoords: {
+		    type: Array,
+		    value: [],
+		    notify: true,		    
+		    //observer: 'observeGeoCoords',  //moved to static get observers
+		},
+//		postBody: {
+//		    type: Object,
+//		    computed: 'getPostBody()'
+//		},
+		postBody: {
+		    type: Object,
+		    computed: 'getPostBody(terrainGeoCoords)'
+		},		
 	    }
 	}
 
 	sendData(event) {
 	    this.shadowRoot.querySelector('iron-ajax').generateRequest();
 	}
-	getPostBody() {
-	    console.log('getPostBody');
-	    return {
+	getPostBody(alignment) {
+	    console.log('getPostBody',alignment);
+	    //return {alignment_1:alignment
+	    return {alignment_1: JSON.stringify(alignment)
 	    };
 	}
 	serverSuccessCb() {
